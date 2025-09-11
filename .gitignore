@@ -4,3 +4,4 @@
 # Maven build
 target/
 *.xml
+/.idea

@@ -9,6 +9,7 @@
     <groupId>com.s3</groupId>
     <artifactId>s3-system</artifactId>
     <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>bucket-service</artifactId>

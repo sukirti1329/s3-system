@@ -1,12 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>com.s3</groupId>
   <artifactId>s3-system</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -15,17 +16,65 @@
     <module>object-service</module>
     <module>metadata-service</module>
     <module>logging-service</module>
+    <!-- later: object-service, auth-service, etc -->
   </modules>
 
-  <!-- Inherit Spring Boot parent -->
+  <!-- Spring Boot BOM -->
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.2</version>
-    <relativePath/> <!-- always fetch from central -->
+    <version>3.2.5</version>
+    <relativePath/>
   </parent>
 
   <properties>
     <java.version>17</java.version>
+    <logstash.version>7.4</logstash.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Common Spring Boot starter for REST APIs -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+        <version>3.1.2</version>
+      </dependency>
+
+      <!-- Lombok (getter/setter annotations) -->
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.28</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Logstash encoder for structured JSON logs -->
+      <dependency>
+        <groupId>net.logstash.logback</groupId>
+        <artifactId>logstash-logback-encoder</artifactId>
+        <version>${logstash.version}</version>
+      </dependency>
+
+      <!-- For testing -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- Spring Boot plugin (available to all services) -->
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
 </project>

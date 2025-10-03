@@ -12,8 +12,6 @@ import java.time.Instant;
 @Schema(description = "Represents a storage bucket in the system")
 public class BucketDTO {
 
-    @Schema(description = "Unique ID of the bucket", example = "bkt-12345")
-    private String bucketId;
 
     @Schema(description = "Bucket name (must be unique per user)", example = "my-photos")
     private String bucketName;

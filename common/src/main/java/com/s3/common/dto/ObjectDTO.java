@@ -15,7 +15,7 @@ public class ObjectDTO {
 
 
     @Schema(description = "Unique identifier for the object", example = "123e4567-e89b-12d3-a456-426614174000")
-    private String objectKey;
+    private String id;
 
     @Schema(description = "Name of the bucket where object is stored", example = "my-bucket")
     private String bucketName;

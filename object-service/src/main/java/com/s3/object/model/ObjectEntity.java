@@ -34,5 +34,7 @@ public class ObjectEntity {
     @Column(nullable = false)
     private String storagePath;
 
+    @Column(name = "uploaded_at", updatable = false, insertable = false,
+            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant uploadedAt = Instant.now();
 }

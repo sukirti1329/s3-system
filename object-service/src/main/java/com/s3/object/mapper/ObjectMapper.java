@@ -6,13 +6,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", builder = @org.mapstruct.Builder(disableBuilder = false))
 public interface ObjectMapper {
-    ObjectMapper INSTANCE = Mappers.getMapper(ObjectMapper.class);
 
-    //@Mapping(source = "id", target = "objectKey")
     ObjectEntity toEntity(ObjectDTO dto);
 
-   // @Mapping(source = "objectKey", target = "id")
     ObjectDTO toDTO(ObjectEntity entity);
 }

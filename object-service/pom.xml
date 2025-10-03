@@ -11,6 +11,8 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>object-service</artifactId>
     <packaging>jar</packaging>
+    <name>object-service</name>
+    <description>S3 Object microservice</description>
     <dependencies>
         <dependency>
             <groupId>com.s3</groupId>
@@ -57,4 +59,15 @@
             <version>2.5.0</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.s3.object.ObjectServiceApplication</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

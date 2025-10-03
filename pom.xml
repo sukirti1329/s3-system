@@ -3,29 +3,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-
   <modelVersion>4.0.0</modelVersion>
-  <properties>
-    <java.version>17</java.version>
-    <logstash.version>7.4</logstash.version>
-    <mapstruct.version>1.5.5.Final</mapstruct.version>
-  </properties>
 
-  <groupId>com.s3</groupId>
-  <artifactId>s3-system</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
-
-  <modules>
-    <module>common</module>
-    <module>bucket-service</module>
-    <module>object-service</module>
-    <module>metadata-service</module>
-    <module>logging-service</module>
-    <!-- later: object-service, auth-service, etc -->
-  </modules>
-
-  <!-- Spring Boot BOM -->
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
@@ -33,43 +12,43 @@
     <relativePath/>
   </parent>
 
+  <groupId>com.s3</groupId>
+  <artifactId>s3-system</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
+  <properties>
+    <java.version>17</java.version>
+    <logstash.version>7.4</logstash.version>
+    <mapstruct.version>1.5.5.Final</mapstruct.version>
+    <lombok.version>1.18.32</lombok.version>
+  </properties>
+
+  <modules>
+    <module>common</module>
+    <module>bucket-service</module>
+    <module>object-service</module>
+    <module>metadata-service</module>
+    <module>logging-service</module>
+  </modules>
 
   <dependencyManagement>
     <dependencies>
-      <!-- Common Spring Boot starter for REST APIs -->
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-        <version>3.1.2</version>
-      </dependency>
-
-      <!-- Lombok (getter/setter annotations) -->
       <dependency>
         <groupId>org.projectlombok</groupId>
         <artifactId>lombok</artifactId>
-        <version>1.18.28</version>
+        <version>${lombok.version}</version>
         <scope>provided</scope>
       </dependency>
-
-      <!-- Logstash encoder for structured JSON logs -->
       <dependency>
         <groupId>net.logstash.logback</groupId>
         <artifactId>logstash-logback-encoder</artifactId>
         <version>${logstash.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.mapstruct</groupId>
         <artifactId>mapstruct</artifactId>
         <version>${mapstruct.version}</version>
-      </dependency>
-
-      <!-- For testing -->
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-test</artifactId>
-        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -77,12 +56,6 @@
   <build>
     <pluginManagement>
       <plugins>
-        <!-- Spring Boot plugin (available to all services) -->
-        <plugin>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-maven-plugin</artifactId>
-        </plugin>
-        <!-- MapStruct annotation processor -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -99,7 +72,7 @@
               <path>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
-                <version>1.18.32</version>
+                <version>${lombok.version}</version>
               </path>
             </annotationProcessorPaths>
           </configuration>

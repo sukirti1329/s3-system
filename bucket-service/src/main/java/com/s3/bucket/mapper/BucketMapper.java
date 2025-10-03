@@ -6,11 +6,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", builder = @org.mapstruct.Builder(disableBuilder = false))
 public interface BucketMapper {
-    BucketMapper INSTANCE = Mappers.getMapper(BucketMapper.class);
 
-    //@Mapping(target = "createdAt", expression = "java(java.time.Instant.now())")
     BucketEntity toEntity(BucketDTO dto);
 
     BucketDTO toDTO(BucketEntity entity);

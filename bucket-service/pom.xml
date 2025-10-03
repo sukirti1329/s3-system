@@ -55,11 +55,6 @@
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>runtime</scope>
-    </dependency>
 
     <!-- MapStruct (no version needed, managed by parent) -->
     <dependency>
@@ -67,15 +62,57 @@
       <artifactId>mapstruct</artifactId>
     </dependency>
 
-  </dependencies>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
 
+  </dependencies>
   <build>
     <plugins>
-      <!-- Boot plugin to package/run service -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>com.s3.bucket.BucketServiceApplication</mainClass>
+        </configuration>
       </plugin>
     </plugins>
   </build>
+
+<!--  <build>-->
+<!--    <plugins>-->
+<!--      &lt;!&ndash; Boot plugin to package/run service &ndash;&gt;-->
+<!--      <plugin>-->
+<!--        <groupId>org.springframework.boot</groupId>-->
+<!--        <artifactId>spring-boot-maven-plugin</artifactId>-->
+<!--      </plugin>-->
+<!--    </plugins>-->
+<!--  </build>-->
+
+<!--  <build>-->
+<!--    <plugins>-->
+<!--      <plugin>-->
+<!--        <groupId>org.springframework.boot</groupId>-->
+<!--        <artifactId>spring-boot-maven-plugin</artifactId>-->
+<!--      </plugin>-->
+<!--      <plugin>-->
+<!--        <groupId>org.apache.maven.plugins</groupId>-->
+<!--        <artifactId>maven-compiler-plugin</artifactId>-->
+<!--        <version>3.11.0</version>-->
+<!--        <configuration>-->
+<!--          <source>17</source>-->
+<!--          <target>17</target>-->
+<!--          <annotationProcessorPaths>-->
+<!--            <path>-->
+<!--              <groupId>org.mapstruct</groupId>-->
+<!--              <artifactId>mapstruct-processor</artifactId>-->
+<!--              <version>1.5.5.Final</version>-->
+<!--            </path>-->
+<!--          </annotationProcessorPaths>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
+<!--    </plugins>-->
+<!--  </build>-->
 </project>

@@ -52,10 +52,15 @@ public class BucketService {
                     logger.error("Bucket {} already exists for owner {}", bucketDTO.getBucketName(), bucketDTO.getOwnerId());
                     throw new InvalidRequestException("Bucket already exists");
                 });
-        BucketEntity bucket = bucketMapper.toEntity(bucketDTO);
-        BucketEntity savedBucketEntity = bucketRepository.save(bucket);
+
+        BucketEntity bucketEntity = BucketEntity.builder().bucketName(bucketDTO.getBucketName()).ownerId(bucketDTO.getOwnerId()).build();
+
+        BucketEntity savedBucketEntity = bucketRepository.save(bucketEntity);
+
+        BucketEntity refreshedEntity = bucketRepository.findById(savedBucketEntity.getBucketName())
+                .orElse(savedBucketEntity);
         logger.info("Bucket {} created successfully", savedBucketEntity.getBucketName());
-        return bucketMapper.toDTO(savedBucketEntity);
+        return bucketMapper.toDTO(refreshedEntity);
     }
 
     @CacheEvict(value = "bucketsByOwner", key = "#bucketDTO.ownerId")

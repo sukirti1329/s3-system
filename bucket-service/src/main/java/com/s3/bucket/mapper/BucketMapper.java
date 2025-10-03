@@ -7,6 +7,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring", builder = @org.mapstruct.Builder(disableBuilder = false))
+//@Mapper(componentModel = "spring")
 public interface BucketMapper {
 
     BucketEntity toEntity(BucketDTO dto);

@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import io.swagger.v3.oas.annotations.Parameter;
 import java.io.IOException;
 import java.util.List;
 
@@ -24,12 +24,17 @@ public class ObjectController {
         this.objectService = objectService;
     }
 
-    @PostMapping("/{bucketName}")
-    @Operation(summary = "Create object", description = "Upload a new object into a bucket")
+
+    @PostMapping(value = "/{bucketName}", consumes = {"multipart/form-data"})
+    @Operation(
+            summary = "Create object",
+            description = "Upload a new object into a bucket"
+    )
     public ResponseEntity<ApiResponse<ObjectDTO>> createObject(
             @PathVariable String bucketName,
             @RequestParam String ownerId,
-            @RequestParam MultipartFile file) throws IOException {
+            @Parameter(description = "The file to upload")
+            @RequestParam("file") MultipartFile file) throws IOException {
 
         ObjectDTO object = objectService.createObject(bucketName, ownerId, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(object));

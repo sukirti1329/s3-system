@@ -32,7 +32,7 @@ springdoc:
       path: /swagger-ui.html
 # File storage location for object binaries
 storage:
-  location: /data/s3/objects
+  location: ./data/s3/objects
 
 bucket:
   service:

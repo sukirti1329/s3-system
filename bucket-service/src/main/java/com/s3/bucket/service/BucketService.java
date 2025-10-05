@@ -53,7 +53,7 @@ public class BucketService {
                     throw new InvalidRequestException("Bucket already exists");
                 });
 
-        BucketEntity bucketEntity = BucketEntity.builder().bucketName(bucketDTO.getBucketName()).ownerId(bucketDTO.getOwnerId()).build();
+        BucketEntity bucketEntity = BucketEntity.builder().bucketName(bucketDTO.getBucketName()).versioningEnabled(bucketDTO.isVersioningEnabled()? bucketDTO.isVersioningEnabled():false).ownerId(bucketDTO.getOwnerId()).build();
 
         BucketEntity savedBucketEntity = bucketRepository.save(bucketEntity);
 
@@ -72,8 +72,9 @@ public class BucketService {
         // Update properties as needed, e.g., versioning flag if added
         // For example, if BucketDTO has versioningEnabled:
         // bucket.setVersioningEnabled(bucketDTO.isVersioningEnabled());
+        BucketEntity updatedBucketEntity = BucketEntity.builder().bucketName(bucketDTO.getBucketName()).versioningEnabled(bucketDTO.isVersioningEnabled()? bucketDTO.isVersioningEnabled():false).ownerId(bucketDTO.getOwnerId()).build();
 
-        BucketEntity updated = bucketRepository.save(bucket);
+        BucketEntity updated = bucketRepository.save(updatedBucketEntity);
         logger.info("Bucket {} updated successfully", updated.getBucketName());
         return bucketMapper.toDTO(updated);
     }

@@ -19,7 +19,9 @@ public class LoggingUtil {
 
     private static String serviceName = "unknown-service"; // default until set
 
-
+    public static void setServiceName(String name) {
+        serviceName = name;
+    }
     private LoggingUtil() {
     }
 

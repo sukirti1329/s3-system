@@ -62,12 +62,17 @@ public class ObjectController {
     }
 
     @DeleteMapping("/{bucketName}/{objectName}")
-    @Operation(summary = "Delete object", description = "Delete an object from a bucket")
+    @Operation(summary = "Delete object", description = "Delete an object from a bucket by giving file name in object name field")
     public ResponseEntity<Void> deleteObject(
             @PathVariable String bucketName,
             @PathVariable String objectName,
             @RequestParam String ownerId) {
-        objectService.deleteObject(bucketName, objectName, ownerId);
-        return ResponseEntity.noContent().build();
+
+        boolean deleted = objectService.deleteObject(bucketName, objectName, ownerId);
+        if (deleted) {
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 }

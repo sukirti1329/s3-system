@@ -13,6 +13,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import org.springframework.util.StringUtils;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,10 +33,29 @@ public class BucketService {
 
 
     public BucketDTO getBucket(String bucketName, String ownerId) {
-        logger.info("Getting bucket: {} for ownerId={}", bucketName, ownerId);
+        logger.info("Request received → GET bucket: '{}' for ownerId='{}'", bucketName, ownerId);
+
+        if (!StringUtils.hasText(bucketName) || !StringUtils.hasText(ownerId)) {
+            logger.error("Invalid parameters → bucketName='{}', ownerId='{}'", bucketName, ownerId);
+            throw new InvalidRequestException("Bucket name and ownerId must not be empty");
+        }
+
         BucketEntity bucket = bucketRepository.findByBucketNameAndOwnerId(bucketName, ownerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bucket not found"));
-        return bucketMapper.toDTO(bucket);
+                .map(entity -> {
+                    logger.debug("Bucket found in database → name='{}', ownerId='{}'",
+                            entity.getBucketName(), entity.getOwnerId());
+                    return entity;
+                })
+                .orElseThrow(() -> {
+                    logger.error("Bucket '{}' not found for owner '{}'", bucketName, ownerId);
+                    return new ResourceNotFoundException(
+                            "Bucket '" + bucketName + "' for owner '" + ownerId + "' does not exist");
+                });
+
+        BucketDTO dto = bucketMapper.toDTO(bucket);
+        logger.info("Returning BucketDTO →  name='{}', ownerId='{}'",
+                 dto.getBucketName(), dto.getOwnerId());
+        return dto;
     }
     @Cacheable(value = "bucketsByOwner", key = "#ownerId")
     public List<BucketDTO> getListOfBuckets(String ownerId) {

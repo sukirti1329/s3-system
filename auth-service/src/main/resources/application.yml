@@ -1,0 +1,39 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/s3system
+    username: s3user
+    password: s3password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: false
+    repair: true  # Add this to repair schema history
+logging:
+  level:
+    root: INFO
+    com.s3: DEBUG
+
+# JWT settings (you can override with environment variables)
+auth:
+  jwt:
+    secret: change-me-please-and-store-securely
+    expiration-ms: 86400000
+
+# storage of logs, etc if needed

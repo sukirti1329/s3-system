@@ -23,6 +23,7 @@
     <module>object-service</module>
     <module>metadata-service</module>
     <module>logging-service</module>
+    <module>auth-service</module>
   </modules>
 
   <properties>

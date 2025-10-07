@@ -12,11 +12,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/buckets")
@@ -174,4 +177,5 @@ public class BucketController {
         bucketService.deleteBucketOfUser(bucketName, ownerId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
 }

@@ -22,6 +22,8 @@ spring:
       enabled: true
       max-file-size: 100MB        # maximum size of a single file
       max-request-size: 120MB     # maximum size of entire request (all files + form data)
+#  config:
+#    import: optional:classpath:application-common.yml
   # Enable caching (can later switch to Redis)
 #  cache:
 #    type: caffeine   # or simple, or redis
@@ -43,3 +45,9 @@ storage:
 bucket:
   service:
     url: http://localhost:8085
+
+# JWT settings (you can override with environment variables)
+auth:
+  jwt:
+    secret: "b4J2zwtv5TIis+vW0hkNpnKUq9frHNF+IGpEZ4a6t+M="
+    expiration-ms: 86400000

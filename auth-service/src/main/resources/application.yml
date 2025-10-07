@@ -4,11 +4,12 @@ server:
 spring:
   application:
     name: auth-service
+
   datasource:
     url: jdbc:postgresql://localhost:5432/s3system
+    driver-class-name: org.postgresql.Driver
     username: s3user
     password: s3password
-    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -24,16 +25,23 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     validate-on-migrate: false
-    repair: true  # Add this to repair schema history
+    repair: true
+
 logging:
   level:
     root: INFO
     com.s3: DEBUG
+    com.s3.common.security.JwtUtil: DEBUG
 
-# JWT settings (you can override with environment variables)
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 auth:
   jwt:
-    secret: change-me-please-and-store-securely
+    # 🔐 IMPORTANT: use the same Base64-encoded key as all other services
+    # For example (matches your bucket-service)
+    secret: "b4J2zwtv5TIis+vW0hkNpnKUq9frHNF+IGpEZ4a6t+M="
     expiration-ms: 86400000
-
-# storage of logs, etc if needed

@@ -1,78 +1,82 @@
 package com.s3.auth.service;
 
-
-import com.s3.auth.mapper.UserMapper;
 import com.s3.auth.model.UserEntity;
 import com.s3.auth.repository.UserRepository;
-import com.s3.auth.config.JwtUtil;
-import com.s3.common.dto.*;
+import com.s3.auth.mapper.UserMapper;
+import com.s3.common.dto.AuthResponseDTO;
+import com.s3.common.dto.LoginRequestDTO;
+import com.s3.common.dto.RegisterRequestDTO;
+import com.s3.common.dto.UserDTO;
+import com.s3.common.exception.InvalidRequestException;
 import com.s3.common.exception.ResourceNotFoundException;
 import com.s3.common.logging.LoggingUtil;
+import com.s3.common.security.JwtUtil;
 import org.slf4j.Logger;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 public class AuthService {
 
     private static final Logger log = LoggingUtil.getLogger(AuthService.class);
-
-    private final UserRepository repo;
-    private final BCryptPasswordEncoder encoder;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
-    private final UserMapper mapper;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public AuthService(UserRepository repo, BCryptPasswordEncoder encoder,
-                       JwtUtil jwtUtil, UserMapper mapper) {
-        this.repo = repo;
-        this.encoder = encoder;
+    public AuthService(UserRepository userRepository, UserMapper userMapper, JwtUtil jwtUtil) {
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
         this.jwtUtil = jwtUtil;
-        this.mapper = mapper;
     }
 
-    public UserDTO register(RegisterRequestDTO req) {
-        log.info("Registering user with username={}", req.getUsername());
+    public UserDTO register(RegisterRequestDTO request) {
+        log.info("Attempting to register user '{}'", request.getUsername());
 
-        if (repo.existsByUsername(req.getUsername())) {
-            log.warn("Registration failed: username {} already exists", req.getUsername());
-            throw new IllegalArgumentException("Username already exists");
+        if (request.getUsername() == null || request.getPassword() == null || request.getEmail() == null) {
+            throw new InvalidRequestException("Username, password, and email are required");
         }
 
-        if (req.getEmail() != null && repo.existsByEmail(req.getEmail())) {
-            log.warn("Registration failed: email {} already exists", req.getEmail());
-            throw new IllegalArgumentException("Email already exists");
-        }
+        userRepository.findByUsername(request.getUsername()).ifPresent(u -> {
+            throw new InvalidRequestException("Username already exists");
+        });
 
-        // MapStruct handles base mapping (except password)
-        UserEntity entity = mapper.fromRegisterRequest(req);
-        entity.setPassword(encoder.encode(req.getPassword()));
+        UserEntity entity = new UserEntity();
+        entity.setUserId(UUID.randomUUID().toString());
+        entity.setUsername(request.getUsername());
+        entity.setEmail(request.getEmail());
+        entity.setPassword(passwordEncoder.encode(request.getPassword()));
+        entity.setRole("USER");
 
-        UserEntity saved = repo.save(entity);
-        log.info("User registered successfully userId={} username={}", saved.getUserId(), saved.getUsername());
-
-        return mapper.toDTO(saved);
+        userRepository.save(entity);
+        return userMapper.toDTO(entity);
     }
 
-    public AuthResponseDTO login(LoginRequestDTO req) {
-        log.info("Attempting login for username={}", req.getUsername());
+    public AuthResponseDTO login(LoginRequestDTO request) {
+        log.info("Login attempt for '{}'", request.getUsername());
 
-        UserEntity user = repo.findByUsername(req.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + req.getUsername()));
+        UserEntity user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (!encoder.matches(req.getPassword(), user.getPassword())) {
-            log.warn("Login failed for username={} (invalid credentials)", req.getUsername());
-            throw new IllegalArgumentException("Invalid credentials");
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new InvalidRequestException("Invalid credentials");
         }
 
-        String token = jwtUtil.generateToken(user.getUsername());
-        log.info("User logged in successfully username={} userId={}", user.getUsername(), user.getUserId());
+        Map<String, Object> claims = Map.of(
+                "userId", user.getUserId(),
+                "role", user.getRole()
+        );
+
+        String token = jwtUtil.generateToken(user.getUsername(), claims); // 1 day
+
         return new AuthResponseDTO(token, "Bearer");
     }
 
     public UserDTO getByUserId(String userId) {
-        log.info("Fetching user by userId={}", userId);
-        UserEntity entity = repo.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
-        return mapper.toDTO(entity);
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return userMapper.toDTO(user);
     }
 }

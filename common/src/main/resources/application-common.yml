@@ -1,0 +1,6 @@
+#jwt:
+#  secret: "s3-system-256bit-secret-key-for-jwt-signing-1234567890123456"
+logging:
+  level:
+    root: INFO
+    com.s3: DEBUG

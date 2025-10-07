@@ -5,30 +5,29 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.Instant;
 
 @Entity
-@Table(name = "buckets")
+@Table(name = "buckets", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"bucket_name", "owner_id"})
+})
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class BucketEntity {
 
-
         @Id
-        @Column(nullable = false, unique = true)
+        @Column(name = "bucket_name", nullable = false, unique = true)
         private String bucketName;
 
-        @Column(nullable = false)
+        @Column(name = "owner_id", nullable = false)
         private String ownerId;
 
-        @Column(name = "versioning_enabled", nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
+        @Column(name = "versioning_enabled", nullable = false)
         private boolean versioningEnabled = false;
+
         @Column(name = "created_at", updatable = false, insertable = false,
                 columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        private Instant createdAt = Instant.now();
-
-        // Getters and Setters
-    }
+        private Instant createdAt;
+}

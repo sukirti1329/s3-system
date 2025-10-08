@@ -10,14 +10,14 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 
 /**
- * Utility class for generating and validating JWT tokens.
- * Supports both plain-text and Base64-encoded secrets automatically.
+ * Utility for generating and validating JWT tokens.
+ * Uses a Base64-encoded 256-bit secret shared across all services.
  */
 @Component
 public class JwtUtil {
@@ -38,35 +38,24 @@ public class JwtUtil {
     @PostConstruct
     public void initKey() {
         try {
-            if (isBase64Encoded(secret)) {
-                byte[] decodedKey = Decoders.BASE64.decode(secret);
-                this.key = Keys.hmacShaKeyFor(decodedKey);
-                log.info("JWT key initialized (Base64 decoded) — length={} bytes, algorithm={}",
-                        decodedKey.length, key.getAlgorithm());
-            } else {
-                byte[] rawKey = secret.getBytes(StandardCharsets.UTF_8);
-                this.key = Keys.hmacShaKeyFor(rawKey);
-                log.info("JWT key initialized (plain text) — length={} bytes, algorithm={}",
-                        rawKey.length, key.getAlgorithm());
-            }
-            System.out.println("[JwtUtil] Initialized with key algorithm: " + key.getAlgorithm());
+            // Always treat the secret as Base64-encoded
+            byte[] decodedKey = Decoders.BASE64.decode(secret);
+            this.key = Keys.hmacShaKeyFor(decodedKey);
+
+            log.info("[JwtUtil] ✅ JWT key initialized (Base64 decoded)");
+            log.info("[JwtUtil] Key length={} bytes, algorithm={}", decodedKey.length, key.getAlgorithm());
+            log.debug("[JwtUtil] Decoded key bytes={}", Arrays.toString(decodedKey));
+
         } catch (WeakKeyException e) {
-            log.error("JWT key is too weak or invalid! Minimum required: 256 bits. Provided secret length: {}",
-                    secret.length());
+            log.error("❌ JWT key too weak or invalid! Provided secret length: {}", secret.length(), e);
             throw e;
         } catch (Exception e) {
-            log.error("Failed to initialize JWT key: {}", e.getMessage(), e);
+            log.error("❌ Failed to initialize JWT key: {}", e.getMessage(), e);
             throw new IllegalStateException("Failed to initialize JWT key", e);
         }
     }
 
-    private boolean isBase64Encoded(String value) {
-        return value.matches("^[A-Za-z0-9+/=]+$") && value.length() % 4 == 0;
-    }
-
-    /**
-     * Generate a signed JWT token for a given subject and claims.
-     */
+    /** Generate a signed JWT token for a subject and claims. */
     public String generateToken(String subject, Map<String, Object> claims) {
         return Jwts.builder()
                 .setSubject(subject)
@@ -77,9 +66,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    /**
-     * Validate a JWT token and return claims if valid.
-     */
+    /** Validate a JWT and return claims if valid. */
     public Claims validateToken(String token) {
         try {
             return Jwts.parserBuilder()
@@ -88,35 +75,26 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException e) {
-            log.error("JWT validation failed: Token expired at {}", e.getClaims().getExpiration());
+            log.warn("JWT validation failed: expired at {}", e.getClaims().getExpiration());
             throw new JwtException("Token expired", e);
-        } catch (UnsupportedJwtException e) {
-            log.error("JWT validation failed: Unsupported token");
-            throw new JwtException("Unsupported token", e);
-        } catch (MalformedJwtException e) {
-            log.error("JWT validation failed: Malformed token");
-            throw new JwtException("Malformed token", e);
         } catch (SignatureException e) {
-            log.error("JWT validation failed: Invalid signature");
+            log.warn("JWT validation failed: invalid signature");
             throw new JwtException("Invalid signature", e);
-        } catch (IllegalArgumentException e) {
-            log.error("JWT validation failed: Illegal argument (token is null/empty)");
+        } catch (MalformedJwtException e) {
+            log.warn("JWT validation failed: malformed token");
+            throw new JwtException("Malformed token", e);
+        } catch (Exception e) {
+            log.warn("JWT validation failed: {}", e.getMessage());
             throw new JwtException("Invalid token", e);
         }
     }
 
-    /**
-     * Extract username (subject) from a valid JWT.
-     */
     public String extractUsername(String token) {
         return validateToken(token).getSubject();
     }
 
-    /**
-     * Extract a specific claim (e.g., role, userId) from JWT.
-     */
-    public String extractClaim(String token, String key) {
-        Object value = validateToken(token).get(key);
+    public String extractClaim(String token, String keyName) {
+        Object value = validateToken(token).get(keyName);
         return value != null ? value.toString() : null;
     }
 }

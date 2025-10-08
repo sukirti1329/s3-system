@@ -66,8 +66,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                String userId = claims.get("userId", String.class);      // extract userId claim
+                request.setAttribute("userId", userId);
 
-                log.debug("[JwtAuthFilter] ✅ Authenticated user '{}', role={}", username, role);
+                log.debug("[JwtAuthFilter] ✅ Authenticated user '{}', role={} userId={}", username, role, userId);
+                //log.debug("[JwtAuthFilter] ✅ Authenticated user '{}', role={}", username, role);
             }
 
         } catch (Exception e) {

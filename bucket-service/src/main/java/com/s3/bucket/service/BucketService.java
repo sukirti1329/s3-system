@@ -22,81 +22,102 @@ import java.util.stream.Collectors;
 public class BucketService {
 
     private static final Logger logger = LoggingUtil.getLogger(BucketService.class);
+
     private final BucketRepository bucketRepository;
     private final BucketMapper bucketMapper;
 
-    public BucketService(BucketRepository bucketRepository, BucketMapper mapper) {
+    public BucketService(BucketRepository bucketRepository, BucketMapper bucketMapper) {
         this.bucketRepository = bucketRepository;
-        this.bucketMapper = mapper;
+        this.bucketMapper = bucketMapper;
     }
 
+    // ---------------- GET SINGLE ----------------
     @Transactional(readOnly = true)
     public BucketDTO getBucket(String bucketName, String ownerId) {
         logger.info("Fetching bucket '{}' for owner '{}'", bucketName, ownerId);
 
-        if (!StringUtils.hasText(bucketName) || !StringUtils.hasText(ownerId)) {
-            throw new InvalidRequestException("Bucket name and ownerId must not be empty");
-        }
-
-        BucketEntity entity = bucketRepository.findByBucketNameAndOwnerId(bucketName, ownerId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        String.format("Bucket '%s' for owner '%s' not found", bucketName, ownerId)
-                ));
+        BucketEntity entity = bucketRepository
+                .findByBucketNameAndOwnerId(bucketName, ownerId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Bucket not found"));
 
         return bucketMapper.toDTO(entity);
     }
 
+    // ---------------- LIST ----------------
     @Cacheable(value = "bucketsByOwner", key = "#ownerId")
     @Transactional(readOnly = true)
     public List<BucketDTO> getListOfBuckets(String ownerId) {
         logger.info("Listing buckets for owner '{}'", ownerId);
-        return bucketRepository.findByOwnerId(ownerId).stream()
+
+        return bucketRepository.findByOwnerId(ownerId)
+                .stream()
                 .map(bucketMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    @CacheEvict(value = "bucketsByOwner", key = "#bucketDTO.ownerId")
-    public BucketDTO createBucketOfUser(BucketDTO bucketDTO) {
-        logger.info("Creating new bucket '{}' for owner '{}'",
-                bucketDTO.getBucketName(), bucketDTO.getOwnerId());
+    // ---------------- CREATE ----------------
+    @CacheEvict(value = "bucketsByOwner", key = "#ownerId")
+    public BucketDTO createBucket(String bucketName,
+                                  String ownerId,
+                                  boolean versioningEnabled) {
 
-        bucketRepository.findByBucketNameAndOwnerId(bucketDTO.getBucketName(), bucketDTO.getOwnerId())
+        logger.info("Creating bucket '{}' for owner '{}'", bucketName, ownerId);
+
+        if (!StringUtils.hasText(bucketName)) {
+            throw new InvalidRequestException("Bucket name cannot be empty");
+        }
+
+        bucketRepository.findByBucketNameAndOwnerId(bucketName, ownerId)
                 .ifPresent(b -> {
-                    throw new InvalidRequestException(
-                            String.format("Bucket '%s' already exists for this user", bucketDTO.getBucketName()));
+                    throw new InvalidRequestException("Bucket already exists");
                 });
 
-        BucketEntity entity = bucketMapper.toEntity(bucketDTO);
+        BucketEntity entity = BucketEntity.builder()
+                .bucketName(bucketName)
+                .ownerId(ownerId)
+                .versioningEnabled(versioningEnabled)
+                .build();
+
         BucketEntity saved = bucketRepository.save(entity);
 
-        logger.info("Bucket '{}' created successfully for owner '{}'",
-                saved.getBucketName(), saved.getOwnerId());
+        logger.info("Bucket '{}' created successfully", bucketName);
         return bucketMapper.toDTO(saved);
     }
 
-    @CacheEvict(value = "bucketsByOwner", key = "#bucketDTO.ownerId")
-    public BucketDTO updateBucket(BucketDTO bucketDTO) {
-        logger.info("Updating bucket '{}' for owner '{}'",
-                bucketDTO.getBucketName(), bucketDTO.getOwnerId());
+    // ---------------- UPDATE (NO NAME CHANGE) ----------------
+    @CacheEvict(value = "bucketsByOwner", key = "#ownerId")
+    public BucketDTO updateBucket(String bucketName,
+                                  String ownerId,
+                                  boolean versioningEnabled) {
 
-        BucketEntity existing = bucketRepository.findByBucketNameAndOwnerId(bucketDTO.getBucketName(), bucketDTO.getOwnerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Bucket not found"));
+        logger.info("Updating bucket '{}' for owner '{}'", bucketName, ownerId);
 
-        existing.setVersioningEnabled(bucketDTO.isVersioningEnabled());
-        BucketEntity updated = bucketRepository.save(existing);
+        BucketEntity entity = bucketRepository
+                .findByBucketNameAndOwnerId(bucketName, ownerId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Bucket not found"));
 
-        logger.info("Bucket '{}' updated successfully", updated.getBucketName());
+        entity.setVersioningEnabled(versioningEnabled);
+
+        BucketEntity updated = bucketRepository.save(entity);
+
+        logger.info("Bucket '{}' updated successfully", bucketName);
         return bucketMapper.toDTO(updated);
     }
 
+    // ---------------- DELETE ----------------
     @CacheEvict(value = "bucketsByOwner", key = "#ownerId")
     public void deleteBucketOfUser(String bucketName, String ownerId) {
         logger.info("Deleting bucket '{}' for owner '{}'", bucketName, ownerId);
 
-        BucketEntity bucket = bucketRepository.findByBucketNameAndOwnerId(bucketName, ownerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bucket not found"));
+        BucketEntity entity = bucketRepository
+                .findByBucketNameAndOwnerId(bucketName, ownerId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Bucket not found"));
 
-        bucketRepository.delete(bucket);
-        logger.info("Bucket '{}' deleted successfully for owner '{}'", bucketName, ownerId);
+        bucketRepository.delete(entity);
+        logger.info("Bucket '{}' deleted successfully", bucketName);
     }
 }
+

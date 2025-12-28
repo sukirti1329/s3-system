@@ -6,21 +6,20 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.List;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(JwtAuthFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
     private final JwtUtil jwtUtil;
 
     public JwtAuthFilter(JwtUtil jwtUtil) {
@@ -28,53 +27,59 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
         String uri = request.getRequestURI();
 
-        // Debug: Print all headers from Swagger
         log.debug("[JwtAuthFilter] URI: {}", uri);
-        log.debug("[JwtAuthFilter] Authorization header: '{}'", authHeader);
+        log.debug("[JwtAuthFilter] Authorization header: {}", authHeader);
+
+        // No token → continue
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.debug("[JwtAuthFilter] No Bearer token found — continuing without authentication");
             filterChain.doFilter(request, response);
             return;
-
         }
-
-        Enumeration<String> headerNames = request.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String headerName = headerNames.nextElement();
-            log.debug("[JwtAuthFilter] Header: {} = {}", headerName, request.getHeader(headerName));
-        }
-
-
-        final String token = authHeader.substring(7);
 
         try {
+            // Extract token
+            String token = authHeader.substring(7);
+
+            // Validate token
             Claims claims = jwtUtil.validateToken(token);
+
             String username = claims.getSubject();
             String role = claims.get("role", String.class);
+            String userId = claims.get("userId", String.class);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(username, null, Collections.singleton(authority));
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            // Build principal
+            JwtUserPrincipal principal = new JwtUserPrincipal(
+                    userId,
+                    username,
+                    role
+            );
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-                String userId = claims.get("userId", String.class);      // extract userId claim
-                request.setAttribute("userId", userId);
+            // Build Authentication
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            principal,
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                    );
 
-                log.debug("[JwtAuthFilter] ✅ Authenticated user '{}', role={} userId={}", username, role, userId);
-                //log.debug("[JwtAuthFilter] ✅ Authenticated user '{}', role={}", username, role);
-            }
+            // Set in SecurityContext
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        } catch (Exception e) {
-            log.warn("[JwtAuthFilter] ❌ JWT validation failed: {}", e.getMessage());
+            log.debug("[JwtAuthFilter] ✅ Authenticated user={} userId={} role={}",
+                    username, userId, role);
+
+        } catch (Exception ex) {
+            log.warn("[JwtAuthFilter] ❌ JWT validation failed: {}", ex.getMessage());
+            SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return;
         }

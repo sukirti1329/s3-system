@@ -48,7 +48,7 @@ public class AuthService {
         entity.setUsername(request.getUsername());
         entity.setEmail(request.getEmail());
         entity.setPassword(passwordEncoder.encode(request.getPassword()));
-        entity.setRole("USER");
+        entity.setRole("USER"); //TODO: NEED TO Change this
 
         userRepository.save(entity);
         return userMapper.toDTO(entity);

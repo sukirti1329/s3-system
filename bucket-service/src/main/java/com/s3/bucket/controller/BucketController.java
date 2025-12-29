@@ -58,8 +58,10 @@ public class BucketController {
                 request.isVersioningEnabled()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(created));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(created));
+
     }
 
     // ---------------- LIST ----------------
@@ -78,7 +80,9 @@ public class BucketController {
         log.info("User [{}] listing buckets", user.getUserId());
 
         return ResponseEntity.ok(
-                new ApiResponse<>(bucketService.getListOfBuckets(user.getUserId()))
+                ApiResponse.success(
+                        bucketService.getListOfBuckets(user.getUserId())
+                )
         );
     }
 
@@ -100,8 +104,11 @@ public class BucketController {
         log.info("User [{}] fetching bucket [{}]", user.getUserId(), bucketName);
 
         return ResponseEntity.ok(
-                new ApiResponse<>(bucketService.getBucket(bucketName, user.getUserId()))
+                ApiResponse.success(
+                        bucketService.getBucket(bucketName, user.getUserId())
+                )
         );
+
     }
 
     // ---------------- UPDATE ----------------
@@ -132,7 +139,7 @@ public class BucketController {
                 request.isVersioningEnabled()
         );
 
-        return ResponseEntity.ok(new ApiResponse<>(updated));
+        return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
     // ---------------- DELETE ----------------
@@ -153,6 +160,6 @@ public class BucketController {
         log.info("User [{}] deleting bucket [{}]", user.getUserId(), bucketName);
 
         bucketService.deleteBucketOfUser(bucketName, user.getUserId());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }

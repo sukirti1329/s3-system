@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface ObjectRepository extends JpaRepository<ObjectEntity, String> {
     List<ObjectEntity> findAllByBucketName(String bucketName);
     Optional<ObjectEntity> findByBucketNameAndFileName(String bucketName, String fileName);
+    boolean existsByBucketNameAndFileName(String bucketName, String fileName);
     void deleteByBucketNameAndFileName(String bucketName, String fileName);
 }
 

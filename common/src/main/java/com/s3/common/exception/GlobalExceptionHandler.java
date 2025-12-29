@@ -1,6 +1,7 @@
 package com.s3.common.exception;
 
 
+import com.s3.common.response.ApiResponse;
 import com.s3.common.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(ErrorCode.AUTHORIZATION_ERROR, ex.getMessage(), Instant.now()));
 
     }
+
 }
 
 

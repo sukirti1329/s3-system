@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
@@ -34,7 +35,7 @@ public class ObjectEntity {
     @Column(nullable = false)
     private String storagePath;
 
-    @Column(name = "uploaded_at", updatable = false, insertable = false,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private Instant uploadedAt = Instant.now();
+    @CreationTimestamp
+    @Column(name = "uploaded_at", nullable = false, updatable = false)
+    private Instant uploadedAt;
 }

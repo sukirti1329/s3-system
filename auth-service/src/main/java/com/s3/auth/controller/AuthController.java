@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,7 +70,11 @@ public class AuthController {
         log.info("Registration request received for username={}", request.getUsername());
         UserDTO createdUser = service.register(request);
         log.info("User registered successfully userId={} username={}", createdUser.getUserId(), createdUser.getUsername());
-        return ResponseEntity.ok(new ApiResponse<>(createdUser));
+        //return ResponseEntity.ok(new ApiResponse<>(createdUser));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(createdUser));
+
     }
 
     /**
@@ -107,7 +112,7 @@ public class AuthController {
         log.info("Login request received for username={}", request.getUsername());
         AuthResponseDTO token = service.login(request);
         log.info("User logged in successfully username={}", request.getUsername());
-        return ResponseEntity.ok(new ApiResponse<>(token));
+        return ResponseEntity.ok(ApiResponse.success(token));
     }
 
     /**
@@ -127,6 +132,8 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserDTO>> getUser(@PathVariable String userId) {
         log.info("Fetching user profile for userId={}", userId);
         UserDTO user = service.getByUserId(userId);
-        return ResponseEntity.ok(new ApiResponse<>(user));
+        return ResponseEntity.ok(
+                ApiResponse.success(service.getByUserId(userId))
+        );
     }
 }

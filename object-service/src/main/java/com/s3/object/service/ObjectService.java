@@ -31,9 +31,9 @@ public class ObjectService {
 
     private static final Logger log = LoggingUtil.getLogger(ObjectService.class);
 
-    private final ObjectRepository objectRepository;
-    private final ObjectMapper objectMapper;
-    private final WebClient.Builder webClientBuilder;
+    private final ObjectRepository repository;
+    private final ObjectMapper mapper;
+    private final WebClient webClient;
 
     @Value("${storage.location}")
     private String storageLocation;
@@ -42,179 +42,85 @@ public class ObjectService {
     private String bucketServiceUrl;
 
     public ObjectService(
-            ObjectRepository objectRepository,
-            ObjectMapper objectMapper,
+            ObjectRepository repository,
+            ObjectMapper mapper,
             WebClient.Builder webClientBuilder
     ) {
-        this.objectRepository = objectRepository;
-        this.objectMapper = objectMapper;
-        this.webClientBuilder = webClientBuilder;
+        this.repository = repository;
+        this.mapper = mapper;
+        this.webClient = webClientBuilder.build();
     }
 
-    // ----------------------------------------------------------------------
-    // CREATE OBJECT
-    // ----------------------------------------------------------------------
     public ObjectDTO createObject(
             String bucketName,
-            MultipartFile file,
-            HttpServletRequest request
+            String userId,
+            MultipartFile file
     ) throws IOException {
 
-        log.info("Creating object in bucket '{}'", bucketName);
-        validateBucket(bucketName, request);
-
-        if (file == null || file.isEmpty()) {
-            throw new InvalidRequestException("Uploaded file must not be empty");
+        validateBucket(bucketName);
+        if (repository.existsByBucketNameAndFileName(bucketName, file.getOriginalFilename())) {
+            throw new InvalidRequestException("Object already exists");
         }
-
-        String objectId = UUID.randomUUID().toString();
-        String fileName = file.getOriginalFilename();
 
         Path bucketPath = Paths.get(storageLocation, bucketName);
         Files.createDirectories(bucketPath);
 
-        Path filePath = bucketPath.resolve(fileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        Path filePath = bucketPath.resolve(file.getOriginalFilename());
+        Files.copy(file.getInputStream(), filePath);
 
         ObjectEntity entity = ObjectEntity.builder()
-                .id(objectId)
+                .id(UUID.randomUUID().toString())
                 .bucketName(bucketName)
-                .fileName(fileName)
+                .fileName(file.getOriginalFilename())
                 .size(file.getSize())
                 .checksum(calculateChecksum(file.getBytes()))
                 .storagePath(filePath.toString())
                 .build();
 
-        objectRepository.save(entity);
-        log.info("Object '{}' stored successfully in bucket '{}'", fileName, bucketName);
-
-        return objectMapper.toDTO(entity);
+        repository.save(entity);
+        return mapper.toDTO(entity);
     }
 
-    // ----------------------------------------------------------------------
-    // LIST OBJECTS
-    // ----------------------------------------------------------------------
-    @Transactional(readOnly = true)
-    public List<ObjectDTO> listObjects(
-            String bucketName,
-            HttpServletRequest request
-    ) {
-        log.info("Listing objects in bucket '{}'", bucketName);
-        validateBucket(bucketName, request);
-
-        return objectRepository.findAllByBucketName(bucketName)
-                .stream()
-                .map(objectMapper::toDTO)
-                .toList();
+    public List<ObjectDTO> listObjects(String bucketName, String userId) {
+        validateBucket(bucketName);
+        return repository.findAllByBucketName(bucketName)
+                .stream().map(mapper::toDTO).toList();
     }
 
-    // ----------------------------------------------------------------------
-    // GET OBJECT
-    // ----------------------------------------------------------------------
-    @Transactional(readOnly = true)
-    public ObjectDTO getObject(
-            String bucketName,
-            String objectName,
-            HttpServletRequest request
-    ) {
-        log.info("Fetching object '{}' from bucket '{}'", objectName, bucketName);
-        validateBucket(bucketName, request);
+    public ObjectDTO getObject(String bucketName, String objectName, String userId) {
+        validateBucket(bucketName);
+        return repository.findByBucketNameAndFileName(bucketName, objectName)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Object not found"));
+    }
 
-        ObjectEntity entity = objectRepository
+    public void deleteObject(String bucketName, String objectName, String userId) {
+        validateBucket(bucketName);
+
+        ObjectEntity entity = repository
                 .findByBucketNameAndFileName(bucketName, objectName)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Object '" + objectName + "' not found in bucket '" + bucketName + "'"
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("Object not found"));
 
-        return objectMapper.toDTO(entity);
-    }
-
-    // ----------------------------------------------------------------------
-    // DELETE OBJECT
-    // ----------------------------------------------------------------------
-    public void deleteObject(
-            String bucketName,
-            String objectName,
-            HttpServletRequest request
-    ) {
-        log.info("Deleting object '{}' from bucket '{}'", objectName, bucketName);
-        validateBucket(bucketName, request);
-
-        ObjectEntity entity = objectRepository
-                .findByBucketNameAndFileName(bucketName, objectName)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Object '" + objectName + "' not found in bucket '" + bucketName + "'"
-                        )
-                );
-
-        objectRepository.delete(entity);
-
-        Path filePath = Paths.get(entity.getStoragePath());
+        repository.delete(entity);
         try {
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            log.warn("Failed to delete file from filesystem: {}", filePath, e);
+            Files.deleteIfExists(Paths.get(entity.getStoragePath()));
+        } catch (IOException ignored) {
         }
-
-        log.info("Object '{}' deleted successfully", objectName);
     }
 
-    // ----------------------------------------------------------------------
-    // BUCKET VALIDATION (TOKEN FORWARDING)
-    // ----------------------------------------------------------------------
-    private void validateBucket(String bucketName, HttpServletRequest request) {
-
-        if (!StringUtils.hasText(bucketName)) {
-            throw new InvalidRequestException("Bucket name must not be empty");
-        }
-
-        String authHeader = request.getHeader("Authorization");
-        if (!StringUtils.hasText(authHeader)) {
-            throw new InvalidRequestException("Missing Authorization header");
-        }
-
-        String uri = bucketServiceUrl + "/buckets/" + bucketName;
-        log.debug("Validating bucket via bucket-service: {}", uri);
-
-        webClientBuilder.build()
-                .get()
-                .uri(uri)
-                .header("Authorization", authHeader) // 🔥 forward JWT
+    private void validateBucket(String bucketName) {
+        webClient.get()
+                .uri(bucketServiceUrl + "/buckets/{name}", bucketName)
                 .retrieve()
-                .onStatus(
-                        status -> status == HttpStatus.NOT_FOUND,
-                        resp -> Mono.error(
-                                new ResourceNotFoundException(
-                                        "Bucket '" + bucketName + "' not found"
-                                )
-                        )
-                )
-                .onStatus(
-                        status -> status == HttpStatus.FORBIDDEN || status == HttpStatus.UNAUTHORIZED,
-                        resp -> Mono.error(
-                                new InvalidRequestException(
-                                        "Access denied to bucket '" + bucketName + "'"
-                                )
-                        )
-                )
                 .toBodilessEntity()
                 .block();
-
-        log.debug("Bucket '{}' validated successfully", bucketName);
     }
 
-    // ----------------------------------------------------------------------
-    // CHECKSUM
-    // ----------------------------------------------------------------------
     private String calculateChecksum(byte[] data) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return Base64.getEncoder().encodeToString(digest.digest(data));
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            return Base64.getEncoder().encodeToString(md.digest(data));
         } catch (Exception e) {
-            log.error("Checksum calculation failed", e);
             return "checksum-error";
         }
     }

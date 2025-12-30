@@ -6,8 +6,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 
-@OpenAPIDefinition(info = @Info(title = "Object Service API", version = "v1"))
-@SpringBootApplication(scanBasePackages = {"com.s3.object", "com.s3.common"})
+@OpenAPIDefinition(info = @Info(title = "Object's Metadata Service API", version = "v1"))
+@SpringBootApplication(scanBasePackages = {"com.s3.metadata", "com.s3.common"})
 @EnableCaching
 public class MetadataServiceApplication {
 

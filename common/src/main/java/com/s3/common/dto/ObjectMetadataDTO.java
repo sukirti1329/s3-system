@@ -1,4 +1,4 @@
-package com.s3.common.dto.request;
+package com.s3.common.dto;
 
 import com.s3.common.enums.AccessLevel;
 import lombok.Data;
@@ -6,17 +6,14 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class CreateMetadataRequest {
+public class ObjectMetadataDTO {
 
     private String objectId;
     private String bucketName;
-    private String ownerId;
-
-    private String checksum;
-    private String storagePath;
 
     private String description;
     private List<String> tags;
 
     private AccessLevel accessLevel;
+    private int activeVersion;
 }

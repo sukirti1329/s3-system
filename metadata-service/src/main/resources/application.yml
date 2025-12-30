@@ -1,0 +1,45 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: metadata-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/s3system
+    username: s3user
+    password: s3password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # use 'validate' in prod
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+logging:
+  level:
+    root: INFO
+    com.s3: INFO
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+      path: /swagger-ui.html
+#
+#bucket:
+#  service:
+#    url: http://localhost:8085
+
+# JWT settings (you can override with environment variables)
+auth:
+  jwt:
+    secret: "b4J2zwtv5TIis+vW0hkNpnKUq9frHNF+IGpEZ4a6t+M="
+    expiration-ms: 86400000

@@ -31,4 +31,7 @@ public class ObjectDTO {
 
     @Schema(description = "Timestamp when the object was uploaded", example = "2025-10-02T10:15:30Z")
     private Instant uploadedAt;
+
+    @Schema(description = "To define the content type of file for download", example = "binary")
+    private String contentType;
 }

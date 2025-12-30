@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -236,4 +237,34 @@ public class ObjectController {
 
         return ResponseEntity.ok(ApiResponse.success());
     }
+
+    // ----------------------------------------------------------------------
+    // Download OBJECT
+    // ----------------------------------------------------------------------
+    @GetMapping("/{bucketName}/{objectName}/download")
+    @Operation(
+            summary = "Download object",
+            description = "Downloads an object from a bucket owned by the authenticated user",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "File downloaded successfully"
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "Object not found"
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized"
+                    )
+            }
+    )
+    public ResponseEntity<Resource> downloadObject(
+            @PathVariable String bucketName,
+            @PathVariable String objectName
+    ) {
+        return objectService.downloadObject(bucketName, objectName);
+    }
+
 }

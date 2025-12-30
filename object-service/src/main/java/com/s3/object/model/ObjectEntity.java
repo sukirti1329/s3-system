@@ -21,7 +21,7 @@ import java.time.Instant;
 public class ObjectEntity {
 
     @Id
-    private String id; // still store UUID internally
+    private String id;
 
     @Column(name = "bucket_name", nullable = false)
     private String bucketName;
@@ -29,10 +29,16 @@ public class ObjectEntity {
     @Column(name = "file_name", nullable = false)
     private String fileName;
 
+    @Column(nullable = false)
     private long size;
-    private String checksum;
 
     @Column(nullable = false)
+    private String checksum;
+
+    @Column(name = "content_type", nullable = false)
+    private String contentType;
+
+    @Column(name = "storage_path", nullable = false)
     private String storagePath;
 
     @CreationTimestamp

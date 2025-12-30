@@ -8,9 +8,14 @@ import com.s3.object.mapper.ObjectMapper;
 import com.s3.object.model.ObjectEntity;
 import com.s3.object.repository.ObjectRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -68,6 +73,7 @@ public class ObjectService {
         Path filePath = bucketPath.resolve(file.getOriginalFilename());
         Files.copy(file.getInputStream(), filePath);
 
+        String contentType = setContentType(file.getContentType());
         ObjectEntity entity = ObjectEntity.builder()
                 .id(UUID.randomUUID().toString())
                 .bucketName(bucketName)
@@ -75,6 +81,7 @@ public class ObjectService {
                 .size(file.getSize())
                 .checksum(calculateChecksum(file.getBytes()))
                 .storagePath(filePath.toString())
+                .contentType(contentType)
                 .build();
 
         repository.save(entity);
@@ -107,6 +114,44 @@ public class ObjectService {
         } catch (IOException ignored) {
         }
     }
+
+
+    public ResponseEntity<Resource> downloadObject(String bucketName, String objectName) {
+        log.info("Downloading object '{}' from bucket '{}'", objectName, bucketName);
+        validateBucket(bucketName);
+        ObjectEntity entity = repository
+                .findByBucketNameAndFileName(bucketName, objectName)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Object not found: " + objectName
+                        )
+                );
+
+        Path filePath = Paths.get(entity.getStoragePath());
+        if (!Files.exists(filePath)) {
+            throw new ResourceNotFoundException("File missing on storage");
+        }
+        Resource resource = new FileSystemResource(filePath);
+        String contentType = setContentType(entity.getContentType());
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + entity.getFileName() + "\""
+                )
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(entity.getSize())
+                .body(resource);
+    }
+
+    private static String setContentType(String entity) {
+        String contentType = entity;
+        if (!StringUtils.hasText(contentType)) {
+            contentType = "application/octet-stream";
+        }
+        return contentType;
+    }
+
 
     private void validateBucket(String bucketName) {
         webClient.get()

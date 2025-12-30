@@ -17,10 +17,12 @@ import java.util.UUID;
 public class ObjectTagEntity {
 
     @Id
+    @GeneratedValue
+    @Column(nullable = false, updatable = false)
     private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "metadata_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "metadata_id", nullable = false)
     private ObjectMetadataEntity metadata;
 
     private String tag;

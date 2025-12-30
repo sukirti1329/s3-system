@@ -38,8 +38,8 @@ public class ObjectMetadataService {
 
         ObjectMetadataEntity entity = mapper.toEntity(dto);
         entity.setId(UUID.fromString(UUID.randomUUID().toString()));
-        entity.setTags(mapper.mapStringsToTags(dto.getTags(), entity)
-        );
+
+        entity.setTags(mapper.mapStringsToTags(dto.getTags(), entity));
 
         ObjectMetadataEntity saved = repository.save(entity);
         return mapper.toDto(saved);
@@ -75,8 +75,17 @@ public class ObjectMetadataService {
 
         // Replace tags safely
         existing.getTags().clear();
-        existing.getTags().addAll(mapper.mapStringsToTags(dto.getTags(), existing)
-        );
+
+        for (String tag : dto.getTags()) {
+            ObjectTagEntity tagEntity = ObjectTagEntity.builder()
+                    .tag(tag)
+                    .metadata(existing)
+                    .build();
+
+            existing.getTags().add(tagEntity);
+        }
+        //existing.getTags().clear();
+        //existing.getTags().addAll(mapper.mapStringsToTags(dto.getTags(), existing));
 
         return mapper.toDto(existing);
     }

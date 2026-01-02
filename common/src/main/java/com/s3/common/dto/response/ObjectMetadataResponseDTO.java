@@ -10,8 +10,6 @@ import java.time.Instant;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "Object metadata response")
 public class ObjectMetadataResponseDTO {
 

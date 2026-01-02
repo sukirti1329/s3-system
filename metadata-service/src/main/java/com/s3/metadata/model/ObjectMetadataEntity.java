@@ -47,11 +47,11 @@ public class ObjectMetadataEntity {
     private Integer activeVersion;
 
 
-    @Column(name = "created_at", updatable = false, insertable = false,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false, nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant createdAt;
 
-    @Column(name = "updated_at", updatable = false, insertable = false,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant updatedAt;
 }

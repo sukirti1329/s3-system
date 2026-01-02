@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "Request to update metadata for an object")
 public class UpdateObjectMetadataDTO {
 

@@ -22,6 +22,8 @@ public interface ObjectMetadataMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "tags", ignore = true)
     @Mapping(target = "activeVersion", ignore = true)
+    @Mapping(target = "createdAt", expression = "java(java.time.Instant.now())")
+    @Mapping(target = "updatedAt", expression = "java(java.time.Instant.now())")
     ObjectMetadataEntity toEntity(CreateObjectMetadataDTO dto);
 
     /* ===================== UPDATE ===================== */
@@ -32,8 +34,8 @@ public interface ObjectMetadataMapper {
             @Mapping(target = "objectId", ignore = true),
             @Mapping(target = "bucketName", ignore = true),
             @Mapping(target = "ownerId", ignore = true),
-           // @Mapping(target = "createdAt", ignore = true),
-           // @Mapping(target = "updatedAt", ignore = true),
+            @Mapping(target = "createdAt", ignore = true),
+            @Mapping(target = "updatedAt", expression = "java(java.time.Instant.now())"),
             @Mapping(target = "tags", ignore = true)
     })
     void updateEntity(UpdateObjectMetadataDTO dto,
@@ -43,8 +45,8 @@ public interface ObjectMetadataMapper {
 
     @Mapping(target = "tags", expression = "java(mapTags(entity))")
     //@Mapping(target = "activeVersion", ignore = true)
-    //@Mapping(target = "createdAt", source = "createdAt")
-    //@Mapping(target = "updatedAt", source = "updatedAt")// future feature
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")// future feature
     ObjectMetadataResponseDTO toResponse(ObjectMetadataEntity entity);
 
     /* ===================== TAG MAPPERS ===================== */

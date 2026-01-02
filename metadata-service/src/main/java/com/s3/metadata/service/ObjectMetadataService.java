@@ -46,7 +46,7 @@ public class ObjectMetadataService {
             entity.setActiveVersion(1);
             applyTags(entity, dto.getTags());
 
-            ObjectMetadataEntity saved = repository.saveAndFlush(entity);
+            ObjectMetadataEntity saved = repository.save(entity);
 
             log.info("Metadata created for objectId={}", dto.getObjectId());
             return mapper.toResponse(saved);

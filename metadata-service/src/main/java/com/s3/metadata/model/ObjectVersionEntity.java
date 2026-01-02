@@ -31,5 +31,6 @@ public class ObjectVersionEntity {
     private boolean isActive;
 
     @CreationTimestamp
+    @Column(name = "created_at", updatable = false, nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant createdAt;
 }

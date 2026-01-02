@@ -10,8 +10,6 @@ import java.time.Instant;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "Request to create metadata for an object")
 public class CreateObjectMetadataDTO {
 

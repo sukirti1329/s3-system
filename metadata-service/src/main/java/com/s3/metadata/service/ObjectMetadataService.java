@@ -1,6 +1,6 @@
 package com.s3.metadata.service;
 
-import com.s3.common.dto.ObjectMetadataDTO;
+import com.s3.common.dto.request.CreateObjectMetadataDTO;
 import com.s3.common.exception.ResourceNotFoundException;
 import com.s3.common.logging.LoggingUtil;
 import com.s3.metadata.mapper.ObjectMetadataMapper;
@@ -33,7 +33,7 @@ public class ObjectMetadataService {
     }
 
     // ---------------- CREATE ----------------
-    public ObjectMetadataDTO create(ObjectMetadataDTO dto) {
+    public CreateObjectMetadataDTO create(CreateObjectMetadataDTO dto) {
         log.info("Creating metadata for objectId={}", dto.getObjectId());
 
         ObjectMetadataEntity entity = mapper.toEntity(dto);
@@ -47,7 +47,7 @@ public class ObjectMetadataService {
 
     // ---------------- GET ----------------
     @Transactional(readOnly = true)
-    public ObjectMetadataDTO getByObjectId(String objectId) {
+    public CreateObjectMetadataDTO getByObjectId(String objectId) {
         ObjectMetadataEntity entity = repository
                 .findByObjectId(objectId)
                 .orElseThrow(() ->
@@ -59,7 +59,7 @@ public class ObjectMetadataService {
     }
 
     // ---------------- UPDATE ----------------
-    public ObjectMetadataDTO update(String objectId, ObjectMetadataDTO dto) {
+    public CreateObjectMetadataDTO update(String objectId, CreateObjectMetadataDTO dto) {
         log.info("Updating metadata for objectId={}", objectId);
 
         ObjectMetadataEntity existing = repository
@@ -92,7 +92,7 @@ public class ObjectMetadataService {
 
     // ---------------- SEARCH ----------------
     @Transactional(readOnly = true)
-    public List<ObjectMetadataDTO> searchByTag(String tag) {
+    public List<CreateObjectMetadataDTO> searchByTag(String tag) {
         log.debug("Searching metadata by tag={}", tag);
 
         return repository.findByTag(tag)

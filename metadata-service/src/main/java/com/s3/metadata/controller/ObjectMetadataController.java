@@ -1,6 +1,6 @@
 package com.s3.metadata.controller;
 
-import com.s3.common.dto.ObjectMetadataDTO;
+import com.s3.common.dto.request.CreateObjectMetadataDTO;
 import com.s3.common.logging.LoggingUtil;
 import com.s3.common.response.ApiResponse;
 import com.s3.common.security.JwtUserPrincipal;
@@ -35,8 +35,8 @@ public class ObjectMetadataController {
             summary = "Create metadata",
             description = "Creates metadata for an object"
     )
-    public ResponseEntity<ApiResponse<ObjectMetadataDTO>> create(
-            @RequestBody ObjectMetadataDTO dto,
+    public ResponseEntity<ApiResponse<CreateObjectMetadataDTO>> create(
+            @RequestBody CreateObjectMetadataDTO dto,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) {
         log.info("User [{}] creating metadata for objectId={}", user.getUserId(), dto.getObjectId());
@@ -49,7 +49,7 @@ public class ObjectMetadataController {
             summary = "Get metadata",
             description = "Fetch metadata for a given object"
     )
-    public ResponseEntity<ApiResponse<ObjectMetadataDTO>> get(
+    public ResponseEntity<ApiResponse<CreateObjectMetadataDTO>> get(
             @PathVariable String objectId,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) {
@@ -63,9 +63,9 @@ public class ObjectMetadataController {
             summary = "Update metadata",
             description = "Update tags, description, or access type"
     )
-    public ResponseEntity<ApiResponse<ObjectMetadataDTO>> update(
+    public ResponseEntity<ApiResponse<CreateObjectMetadataDTO>> update(
             @PathVariable String objectId,
-            @RequestBody ObjectMetadataDTO dto,
+            @RequestBody CreateObjectMetadataDTO dto,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) {
         log.info("User [{}] updating metadata for objectId={}", user.getUserId(), objectId);
@@ -78,7 +78,7 @@ public class ObjectMetadataController {
             summary = "Search metadata",
             description = "Search objects by metadata tags"
     )
-    public ResponseEntity<ApiResponse<List<ObjectMetadataDTO>>> search(
+    public ResponseEntity<ApiResponse<List<CreateObjectMetadataDTO>>> search(
             @RequestParam String tag,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) {

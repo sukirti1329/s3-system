@@ -19,21 +19,21 @@ public interface ObjectMetadataMapper {
 
     /* ===================== CREATE ===================== */
 
-    //@Mapping(target = "id", expression = "java(UUID.randomUUID())")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "tags", ignore = true)
+    @Mapping(target = "activeVersion", ignore = true)
     ObjectMetadataEntity toEntity(CreateObjectMetadataDTO dto);
 
     /* ===================== UPDATE ===================== */
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    //@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mappings({
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "objectId", ignore = true),
             @Mapping(target = "bucketName", ignore = true),
             @Mapping(target = "ownerId", ignore = true),
-            @Mapping(target = "createdAt", ignore = true),
-            @Mapping(target = "updatedAt", ignore = true),
+           // @Mapping(target = "createdAt", ignore = true),
+           // @Mapping(target = "updatedAt", ignore = true),
             @Mapping(target = "tags", ignore = true)
     })
     void updateEntity(UpdateObjectMetadataDTO dto,
@@ -42,9 +42,9 @@ public interface ObjectMetadataMapper {
     /* ===================== RESPONSE ===================== */
 
     @Mapping(target = "tags", expression = "java(mapTags(entity))")
-    @Mapping(target = "activeVersion", ignore = true)
-    @Mapping(target = "createdAt", source = "createdAt")
-    @Mapping(target = "updatedAt", source = "updatedAt")// future feature
+    //@Mapping(target = "activeVersion", ignore = true)
+    //@Mapping(target = "createdAt", source = "createdAt")
+    //@Mapping(target = "updatedAt", source = "updatedAt")// future feature
     ObjectMetadataResponseDTO toResponse(ObjectMetadataEntity entity);
 
     /* ===================== TAG MAPPERS ===================== */

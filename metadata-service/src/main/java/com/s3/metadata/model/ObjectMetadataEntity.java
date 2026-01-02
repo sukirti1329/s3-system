@@ -38,9 +38,20 @@ public class ObjectMetadataEntity {
     @OneToMany(mappedBy = "metadata", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ObjectTagEntity> tags;
 
-    @CreationTimestamp
+
+
+    @Column(name = "versioning_enabled", nullable = false)
+    private boolean versioningEnabled = true;
+
+    @Column(name = "active_version")
+    private Integer activeVersion;
+
+
+    @Column(name = "created_at", updatable = false, insertable = false,
+            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant createdAt;
 
-    @UpdateTimestamp
+    @Column(name = "updated_at", updatable = false, insertable = false,
+            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant updatedAt;
 }

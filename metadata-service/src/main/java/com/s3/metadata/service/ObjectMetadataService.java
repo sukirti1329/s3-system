@@ -43,7 +43,7 @@ public class ObjectMetadataService {
             entity.setId(UUID.randomUUID());
             entity.setOwnerId(ownerId);
             entity.setAccessLevel(dto.getAccessLevel());
-
+            entity.setActiveVersion(1);
             applyTags(entity, dto.getTags());
 
             ObjectMetadataEntity saved = repository.saveAndFlush(entity);

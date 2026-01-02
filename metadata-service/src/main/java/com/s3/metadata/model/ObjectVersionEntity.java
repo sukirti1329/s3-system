@@ -18,10 +18,16 @@ public class ObjectVersionEntity {
     @Id
     private UUID id;
 
+    @Column(nullable = false)
     private String objectId;
+
+    @Column(nullable = false)
     private int versionNumber;
+
     private String checksum;
     private String storagePath;
+
+    @Column(nullable = false)
     private boolean isActive;
 
     @CreationTimestamp

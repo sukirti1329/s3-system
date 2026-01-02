@@ -33,6 +33,9 @@ public class ObjectMetadataResponseDTO {
     @Schema(description = "Tags associated with object")
     private List<String> tags;
 
+    @Schema(description = "Enable versioning for this bucket", example = "true")
+    private boolean versioningEnabled;
+
     @Schema(description = "Current active version number")
     private Integer activeVersion;
 

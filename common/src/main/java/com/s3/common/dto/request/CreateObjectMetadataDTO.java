@@ -21,8 +21,6 @@ public class CreateObjectMetadataDTO {
     @Schema(description = "Bucket name", example = "user-photos", required = true)
     private String bucketName;
 
-//    @Schema(description = "Owner user ID", example = "user-123", required = true)
-//    private String ownerId;
 
     @Schema(description = "Access level of the object", example = "PRIVATE")
     private AccessLevel accessLevel = AccessLevel.PRIVATE;
@@ -33,7 +31,7 @@ public class CreateObjectMetadataDTO {
     @Schema(description = "Tags associated with object")
     private List<String> tags;
 
-    @Schema(description = "Current active version number")
-    private Integer activeVersion;
+    @Schema(description = "Enable or disable versioning")
+    private boolean versioningEnabled = true;
 
 }

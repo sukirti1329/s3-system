@@ -1,6 +1,8 @@
 package com.s3.metadata.controller;
 
 import com.s3.common.dto.request.CreateObjectMetadataDTO;
+import com.s3.common.dto.request.UpdateObjectMetadataDTO;
+import com.s3.common.dto.response.ObjectMetadataResponseDTO;
 import com.s3.common.logging.LoggingUtil;
 import com.s3.common.response.ApiResponse;
 import com.s3.common.security.JwtUserPrincipal;
@@ -35,12 +37,12 @@ public class ObjectMetadataController {
             summary = "Create metadata",
             description = "Creates metadata for an object"
     )
-    public ResponseEntity<ApiResponse<CreateObjectMetadataDTO>> create(
+    public ResponseEntity<ApiResponse<ObjectMetadataResponseDTO>> create(
             @RequestBody CreateObjectMetadataDTO dto,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) {
         log.info("User [{}] creating metadata for objectId={}", user.getUserId(), dto.getObjectId());
-        return ResponseEntity.ok(ApiResponse.success(service.create(dto)));
+        return ResponseEntity.ok(ApiResponse.success(service.create(dto, user.getUserId())));
     }
 
     // ---------------- GET ----------------
@@ -49,7 +51,7 @@ public class ObjectMetadataController {
             summary = "Get metadata",
             description = "Fetch metadata for a given object"
     )
-    public ResponseEntity<ApiResponse<CreateObjectMetadataDTO>> get(
+    public ResponseEntity<ApiResponse<ObjectMetadataResponseDTO>> get(
             @PathVariable String objectId,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) {
@@ -63,9 +65,9 @@ public class ObjectMetadataController {
             summary = "Update metadata",
             description = "Update tags, description, or access type"
     )
-    public ResponseEntity<ApiResponse<CreateObjectMetadataDTO>> update(
+    public ResponseEntity<ApiResponse<ObjectMetadataResponseDTO>> update(
             @PathVariable String objectId,
-            @RequestBody CreateObjectMetadataDTO dto,
+            @RequestBody UpdateObjectMetadataDTO dto,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) {
         log.info("User [{}] updating metadata for objectId={}", user.getUserId(), objectId);
@@ -73,16 +75,16 @@ public class ObjectMetadataController {
     }
 
     // ---------------- SEARCH ----------------
-    @GetMapping("/search")
-    @Operation(
-            summary = "Search metadata",
-            description = "Search objects by metadata tags"
-    )
-    public ResponseEntity<ApiResponse<List<CreateObjectMetadataDTO>>> search(
-            @RequestParam String tag,
-            @AuthenticationPrincipal JwtUserPrincipal user
-    ) {
-        log.info("User [{}] searching metadata by tag={}", user.getUserId(), tag);
-        return ResponseEntity.ok(ApiResponse.success(service.searchByTag(tag)));
-    }
+//    @GetMapping("/search")
+//    @Operation(
+//            summary = "Search metadata",
+//            description = "Search objects by metadata tags"
+//    )
+//    public ResponseEntity<ApiResponse<List<CreateObjectMetadataDTO>>> search(
+//            @RequestParam String tag,
+//            @AuthenticationPrincipal JwtUserPrincipal user
+//    ) {
+//        log.info("User [{}] searching metadata by tag={}", user.getUserId(), tag);
+//        return ResponseEntity.ok(ApiResponse.success(service.searchByTag(tag)));
+//    }
 }

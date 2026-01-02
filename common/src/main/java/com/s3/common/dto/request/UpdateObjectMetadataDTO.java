@@ -6,23 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Request to create metadata for an object")
-public class CreateObjectMetadataDTO {
-
-    @Schema(description = "Object ID (from object-service)", example = "obj-123", required = true)
-    private String objectId;
-
-    @Schema(description = "Bucket name", example = "user-photos", required = true)
-    private String bucketName;
-
-//    @Schema(description = "Owner user ID", example = "user-123", required = true)
-//    private String ownerId;
+@Schema(description = "Request to update metadata for an object")
+public class UpdateObjectMetadataDTO {
 
     @Schema(description = "Access level of the object", example = "PRIVATE")
     private AccessLevel accessLevel = AccessLevel.PRIVATE;
@@ -32,8 +22,4 @@ public class CreateObjectMetadataDTO {
 
     @Schema(description = "Tags associated with object")
     private List<String> tags;
-
-    @Schema(description = "Current active version number")
-    private Integer activeVersion;
-
 }

@@ -1,0 +1,33 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: event-service
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    listener:
+      auto-startup: false
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+    admin:
+      auto-create: true
+
+logging:
+  level:
+    root: INFO
+    com.s3: DEBUG
+
+s3:
+  event:
+    service-name: ${spring.application.name}
+    topics:
+      object: s3.object.events
+      metadata: s3.metadata.events

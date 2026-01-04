@@ -4,3 +4,18 @@ logging:
   level:
     root: INFO
     com.s3: DEBUG
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+s3:
+  event:
+    service-name: object-service
+    topics:
+      object: s3.object.events
+      metadata: s3.metadata.events

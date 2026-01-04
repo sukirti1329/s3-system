@@ -1,0 +1,23 @@
+package com.s3.common.events.payload.object;
+
+import com.s3.common.events.payload.S3EventPayload;
+import lombok.*;
+
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ObjectUpdatedPayload implements S3EventPayload {
+
+    private String objectId;
+    private String bucketName;
+    private String objectKey;
+
+    // Optional updates
+    private String description;
+    private List<String> tags;
+    private String accessLevel;
+    private Boolean versionEnabled;
+}

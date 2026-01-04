@@ -1,6 +1,8 @@
 package com.s3.object.service;
 
-import com.s3.common.dto.ObjectDTO;
+import com.s3.common.dto.request.CreateObjectRequestDTO;
+import com.s3.common.dto.request.UpdateObjectRequestDTO;
+import com.s3.common.dto.response.ObjectResponseDTO;
 import com.s3.common.exception.InvalidRequestException;
 import com.s3.common.exception.ResourceNotFoundException;
 import com.s3.common.logging.LoggingUtil;
@@ -57,14 +59,20 @@ public class ObjectService {
         this.objectEventService = objectEventService;
     }
 
-    public ObjectDTO createObject(
+    public ObjectResponseDTO createObject(
             String bucketName,
             String userId,
-            MultipartFile file
+            MultipartFile file,
+            CreateObjectRequestDTO request
     ) throws IOException {
 
         validateBucket(bucketName);
-        if (repository.existsByBucketNameAndFileName(bucketName, file.getOriginalFilename())) {
+        String fileName = file.getOriginalFilename();
+        if (!StringUtils.hasText(fileName)) {
+            throw new InvalidRequestException("File name is required");
+        }
+
+        if (repository.existsByBucketNameAndFileName(bucketName, fileName)) {
             throw new InvalidRequestException("Object already exists");
         }
 
@@ -86,17 +94,33 @@ public class ObjectService {
                 .build();
 
         repository.save(entity);
-        objectEventService.publishObjectCreatedEvent(entity.getId(),bucketName,userId);
+
+        objectEventService.publishObjectCreatedEvent(entity, userId, request);
         return mapper.toDTO(entity);
     }
 
-    public List<ObjectDTO> listObjects(String bucketName, String userId) {
+    public void updateObject(
+            String bucketName,
+            String objectName,
+            String userId,
+            UpdateObjectRequestDTO request
+    ) {
+
+        validateBucket(bucketName);
+
+        ObjectEntity entity = repository
+                .findByBucketNameAndFileName(bucketName, objectName)
+                .orElseThrow(() -> new ResourceNotFoundException("Object not found"));
+
+        objectEventService.publishObjectUpdatedEvent(entity, userId, request);
+    }
+    public List<ObjectResponseDTO> listObjects(String bucketName, String userId) {
         validateBucket(bucketName);
         return repository.findAllByBucketName(bucketName)
                 .stream().map(mapper::toDTO).toList();
     }
 
-    public ObjectDTO getObject(String bucketName, String objectName, String userId) {
+    public ObjectResponseDTO getObject(String bucketName, String objectName, String userId) {
         validateBucket(bucketName);
         return repository.findByBucketNameAndFileName(bucketName, objectName)
                 .map(mapper::toDTO)
@@ -111,10 +135,15 @@ public class ObjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Object not found"));
 
         repository.delete(entity);
+        // Delete file
         try {
             Files.deleteIfExists(Paths.get(entity.getStoragePath()));
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            log.warn("Failed to delete file from storage: {}", entity.getStoragePath(), e);
         }
+
+        // Publish delete event LAST
+        objectEventService.publishObjectDeletedEvent(entity, userId);
     }
 
 
@@ -170,5 +199,22 @@ public class ObjectService {
         } catch (Exception e) {
             return "checksum-error";
         }
+    }
+
+    private CreateObjectRequestDTO normalizeCreateRequest(
+            CreateObjectRequestDTO createObjectRequestDTO
+    ) {
+        if (createObjectRequestDTO == null) {
+            createObjectRequestDTO = new CreateObjectRequestDTO();
+        }
+
+        if (createObjectRequestDTO.getVersionEnabled() == null) {
+            createObjectRequestDTO.setVersionEnabled(true);
+        }
+        if (!StringUtils.hasText(createObjectRequestDTO.getAccessLevel())) {
+            createObjectRequestDTO.setAccessLevel("PRIVATE");
+        }
+
+        return createObjectRequestDTO;
     }
 }

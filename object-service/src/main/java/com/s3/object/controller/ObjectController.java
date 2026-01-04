@@ -1,18 +1,20 @@
 package com.s3.object.controller;
 
-import com.s3.common.dto.ObjectDTO;
+import com.s3.common.dto.request.CreateObjectRequestDTO;
+import com.s3.common.dto.request.UpdateObjectRequestDTO;
+import com.s3.common.dto.response.ObjectResponseDTO;
 import com.s3.common.logging.LoggingUtil;
 import com.s3.common.response.ApiResponse;
 import com.s3.common.security.JwtUserPrincipal;
 import com.s3.object.service.ObjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +33,8 @@ public class ObjectController {
 
     private static final Logger log = LoggingUtil.getLogger(ObjectController.class);
     private final ObjectService objectService;
-
+    private final com.fasterxml.jackson.databind.ObjectMapper mapper =
+            new com.fasterxml.jackson.databind.ObjectMapper();
     public ObjectController(ObjectService objectService) {
         this.objectService = objectService;
     }
@@ -41,47 +44,74 @@ public class ObjectController {
     // ----------------------------------------------------------------------
     @PostMapping(
             value = "/{bucketName}",
-            consumes = "multipart/form-data"
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     @Operation(
             summary = "Upload object to bucket",
-            description = "Uploads a new object into the specified bucket owned by the authenticated user."
+            description = "Uploads a new object with metadata into the specified bucket"
     )
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "201",
-            description = "Object uploaded successfully"
-    )
-    public ResponseEntity<ApiResponse<ObjectDTO>> createObject(
-            @Parameter(
-                    description = "Bucket name",
-                    required = true
-            )
+    public ResponseEntity<ApiResponse<ObjectResponseDTO>> createObject(
+            @Parameter(description = "Bucket name", required = true)
             @PathVariable String bucketName,
+
             @Parameter(
                     description = "File to upload",
                     required = true,
-                    content = @Content(
-                            mediaType = "multipart/form-data",
-                            schema = @Schema(type = "string", format = "binary")
-                    )
+                    schema = @Schema(type = "string", format = "binary")
             )
-            @RequestParam("file") MultipartFile file,
+            @RequestParam("file")
+            MultipartFile file,
+
+            @Parameter(
+                    description = "Create object metadata as JSON",
+                    required = false,
+                    schema = @Schema(implementation = CreateObjectRequestDTO.class)
+            )
+            @RequestParam(value = "metadata", required = false)
+            String metadataJson,
+
             @AuthenticationPrincipal JwtUserPrincipal user
     ) throws IOException {
-        log.info(
-                "User [{}] uploading object [{}] to bucket [{}]",
-                user.getUserId(),
-                file.getOriginalFilename(),
-                bucketName
-        );
-        ObjectDTO object = objectService.createObject(
-                bucketName,
-                user.getUserId(),
-                file
-        );
+
+        CreateObjectRequestDTO metadata = parseMetadata(metadataJson);
+
+        ObjectResponseDTO response =
+                objectService.createObject(
+                        bucketName,
+                        user.getUserId(),
+                        file,
+                        metadata
+                );
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(object));
+                .body(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/{bucketName}/{objectName}")
+    @Operation(summary = "Update object metadata")
+    public ResponseEntity<ApiResponse<Void>> updateObject(
+            @PathVariable String bucketName,
+            @PathVariable String objectName,
+            @RequestBody UpdateObjectRequestDTO request,
+            @AuthenticationPrincipal JwtUserPrincipal user
+    ) {
+
+        log.info(
+                "User [{}] updating object [{}] in bucket [{}]",
+                user.getUserId(),
+                objectName,
+                bucketName
+        );
+
+        objectService.updateObject(
+                bucketName,
+                objectName,
+                user.getUserId(),
+                request
+        );
+
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
 
@@ -107,7 +137,7 @@ public class ObjectController {
                     )
             }
     )
-    public ResponseEntity<ApiResponse<List<ObjectDTO>>> listObjects(
+    public ResponseEntity<ApiResponse<List<ObjectResponseDTO>>> listObjects(
             @Parameter(description = "Bucket name", required = true)
             @PathVariable String bucketName,
 
@@ -120,7 +150,7 @@ public class ObjectController {
                 bucketName
         );
 
-        List<ObjectDTO> objects = objectService.listObjects(
+        List<ObjectResponseDTO> objects = objectService.listObjects(
                 bucketName,
                 user.getUserId()
         );
@@ -157,7 +187,7 @@ public class ObjectController {
                     )
             }
     )
-    public ResponseEntity<ApiResponse<ObjectDTO>> getObject(
+    public ResponseEntity<ApiResponse<ObjectResponseDTO>> getObject(
             @Parameter(description = "Bucket name", required = true)
             @PathVariable String bucketName,
 
@@ -174,7 +204,7 @@ public class ObjectController {
                 bucketName
         );
 
-        ObjectDTO object = objectService.getObject(
+        ObjectResponseDTO object = objectService.getObject(
                 bucketName,
                 objectName,
                 user.getUserId()
@@ -265,6 +295,18 @@ public class ObjectController {
             @PathVariable String objectName
     ) {
         return objectService.downloadObject(bucketName, objectName);
+    }
+
+    private CreateObjectRequestDTO parseMetadata(String json) {
+        if (json == null || json.isBlank()) {
+            return new CreateObjectRequestDTO(); // defaults apply
+        }
+
+        try {
+            return mapper.readValue(json, CreateObjectRequestDTO.class);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid metadata JSON");
+        }
     }
 
 }

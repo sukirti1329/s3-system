@@ -1,4 +1,4 @@
-package com.s3.common.dto;
+package com.s3.common.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @Data
 @Schema(description = "Data transfer object representing an object stored in a bucket")
-public class ObjectDTO {
+public class ObjectResponseDTO {
 
 
     @Schema(description = "Unique identifier for the object", example = "123e4567-e89b-12d3-a456-426614174000")

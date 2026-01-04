@@ -39,6 +39,7 @@ public class ObjectService {
     private final ObjectRepository repository;
     private final ObjectMapper mapper;
     private final WebClient webClient;
+    private final ObjectEventService objectEventService;
 
     @Value("${storage.location}")
     private String storageLocation;
@@ -49,11 +50,13 @@ public class ObjectService {
     public ObjectService(
             ObjectRepository repository,
             ObjectMapper mapper,
-            WebClient.Builder webClientBuilder
+            WebClient.Builder webClientBuilder,
+            ObjectEventService objectEventService
     ) {
         this.repository = repository;
         this.mapper = mapper;
         this.webClient = webClientBuilder.build();
+        this.objectEventService = objectEventService;
     }
 
     public ObjectDTO createObject(
@@ -85,6 +88,7 @@ public class ObjectService {
                 .build();
 
         repository.save(entity);
+        objectEventService.publishObjectCreatedEvent(entity.getId(),bucketName,userId);
         return mapper.toDTO(entity);
     }
 

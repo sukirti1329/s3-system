@@ -1,4 +1,4 @@
-package com.s3.object.service;
+package com.s3.object.event;
 
 import com.s3.common.events.enums.S3EventType;
 import com.s3.common.events.model.S3Event;

@@ -5,6 +5,18 @@ spring:
   application:
     name: metadata-service
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: metadata-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "*"
+    listener:
+      missing-topics-fatal: false
+
   datasource:
     url: jdbc:postgresql://localhost:5432/s3system
     username: s3user
@@ -43,3 +55,10 @@ auth:
   jwt:
     secret: "b4J2zwtv5TIis+vW0hkNpnKUq9frHNF+IGpEZ4a6t+M="
     expiration-ms: 86400000
+
+s3:
+  event:
+    service-name: ${spring.application.name}
+    topics:
+      object: s3.object.events
+      metadata: s3.metadata.events

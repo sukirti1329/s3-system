@@ -6,8 +6,8 @@ CREATE TABLE public.object_metadata (
     id uuid NOT NULL,
     access_level varchar(255) NULL,
     bucket_name varchar(255) NULL,
-    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     description varchar(255) NULL,
     object_id varchar(255) NOT NULL,
     owner_id varchar(255) NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE public.object_tags (
     id uuid NOT NULL,
     tag varchar(255) NULL,
     metadata_id uuid NOT NULL,
-    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT object_tags_pkey
         PRIMARY KEY (id),
@@ -59,7 +59,7 @@ CREATE TABLE public.object_versions (
     owner_id varchar(255) NOT NULL,
     version_number int4 NOT NULL,
     is_active bool NOT NULL,
-    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT object_versions_pkey
         PRIMARY KEY (id),

@@ -25,7 +25,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # use 'validate' in prod
+      ddl-auto: validate   # update only in dev
     show-sql: false
     properties:
       hibernate:
@@ -38,27 +38,22 @@ spring:
 logging:
   level:
     root: INFO
-    com.s3: INFO
+    com.s3: DEBUG
 
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
-      path: /swagger-ui.html
-#
-#bucket:
-#  service:
-#    url: http://localhost:8085
+    path: /swagger-ui.html
 
-# JWT settings (you can override with environment variables)
 auth:
   jwt:
     secret: "b4J2zwtv5TIis+vW0hkNpnKUq9frHNF+IGpEZ4a6t+M="
     expiration-ms: 86400000
 
 s3:
-  event:
-    service-name: ${spring.application.name}
+  events:
+    service-name: metadata-service
     topics:
       object: s3.object.events
       metadata: s3.metadata.events

@@ -23,13 +23,14 @@ public class ObjectVersionEntity {
     private String objectId;
 
     @Column(nullable = false)
+    private String ownerId;
+
+    @Column(nullable = false)
     private int versionNumber;
 
     @Column(nullable = false)
     private boolean isActive;
 
-    @Column(nullable = false)
-    private String ownerId;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

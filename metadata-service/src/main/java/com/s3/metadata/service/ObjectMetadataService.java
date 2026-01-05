@@ -22,50 +22,58 @@ import java.util.UUID;
 @Transactional
 public class ObjectMetadataService {
 
-    private static final Logger log = LoggingUtil.getLogger(ObjectMetadataService.class);
+    private static final Logger log =
+            LoggingUtil.getLogger(ObjectMetadataService.class);
 
     private final ObjectMetadataRepository repository;
     private final ObjectMetadataMapper mapper;
     private final ObjectVersionService versionService;
 
-    public ObjectMetadataService(ObjectMetadataRepository repository, ObjectMetadataMapper mapper, ObjectVersionService versionService) {
+    public ObjectMetadataService(
+            ObjectMetadataRepository repository,
+            ObjectMetadataMapper mapper,
+            ObjectVersionService versionService
+    ) {
         this.repository = repository;
         this.mapper = mapper;
         this.versionService = versionService;
     }
 
     /* ===================== CREATE ===================== */
+
     public ObjectMetadataResponseDTO create(
             CreateObjectMetadataDTO dto,
             String ownerId
-    ) {log.info(
-                "Creating metadata for objectId={} by user={}",
-                dto.getObjectId(),
-                ownerId
-        );
+    ) {
+
+        log.info("Creating metadata for objectId={}", dto.getObjectId());
+
         ObjectMetadataEntity entity = mapper.toEntity(dto);
         entity.setId(UUID.randomUUID());
         entity.setOwnerId(ownerId);
         entity.setAccessLevel(dto.getAccessLevel());
         entity.setActiveVersion(1);
+
         applyTags(entity, dto.getTags());
+
         ObjectMetadataEntity saved = repository.save(entity);
 
-        //  Versioning belongs here
-       // versionService.createInitialVersion(saved, dto);
-        log.info(
-                "Metadata + v1 created for objectId={}",
-                dto.getObjectId()
+        // ✅ Correct call
+        versionService.createInitialVersion(
+                dto.getObjectId(),
+                ownerId
         );
+
         return mapper.toResponse(saved);
     }
 
     /* ===================== UPDATE ===================== */
 
-    /* ===================== UPDATE ===================== */
+    public ObjectMetadataResponseDTO update(
+            String objectId,
+            UpdateObjectMetadataDTO dto
+    ) {
 
-    public ObjectMetadataResponseDTO update(String objectId, UpdateObjectMetadataDTO dto) {
-        log.info("Updating metadata for objectId={}", objectId);
         ObjectMetadataEntity entity = repository
                 .findByObjectId(objectId)
                 .orElseThrow(() ->
@@ -73,31 +81,61 @@ public class ObjectMetadataService {
                                 "Metadata not found for objectId=" + objectId
                         )
                 );
+
         mapper.updateEntity(dto, entity);
         applyTags(entity, dto.getTags());
+
         ObjectMetadataEntity updated = repository.saveAndFlush(entity);
-        //  Versioning logic lives here
+
         if (Boolean.TRUE.equals(dto.getVersioningEnabled())) {
-            //versionService.createNewVersion(updated, dto);
+            versionService.createNewVersion(
+                    objectId,
+                    entity.getOwnerId()
+            );
+            entity.setActiveVersion(entity.getActiveVersion() + 1);
         }
-        log.info("Metadata updated for objectId={}", objectId);
+
         return mapper.toResponse(updated);
     }
 
+    /* ===================== DELETE ===================== */
 
-    private void applyTags(ObjectMetadataEntity entity, List<String> tags) {
+    @Transactional
+    public void deleteByObjectId(String objectId) {
+
+        ObjectMetadataEntity metadata = repository
+                .findByObjectId(objectId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Metadata not found for objectId=" + objectId
+                        )
+                );
+
+        versionService.deleteByObjectId(objectId);
+        repository.delete(metadata);
+    }
+
+    /* ===================== TAGS ===================== */
+
+    private void applyTags(
+            ObjectMetadataEntity entity,
+            List<String> tags
+    ) {
         if (tags == null) return;
+
         if (entity.getTags() == null) {
             entity.setTags(new ArrayList<>());
         } else {
             entity.getTags().clear();
         }
+
         for (String tag : tags) {
-            ObjectTagEntity tagEntity = ObjectTagEntity.builder()
-                    .tag(tag)
-                    .metadata(entity)
-                    .build();
-            entity.getTags().add(tagEntity);
+            entity.getTags().add(
+                    ObjectTagEntity.builder()
+                            .tag(tag)
+                            .metadata(entity)
+                            .build()
+            );
         }
     }
 
@@ -105,12 +143,14 @@ public class ObjectMetadataService {
 
     @Transactional(readOnly = true)
     public ObjectMetadataResponseDTO getByObjectId(String objectId) {
-        log.info("Fetching metadata for objectId={}", objectId);
-
         return repository.findByObjectId(objectId)
                 .map(mapper::toResponse)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Metadata not found for objectId=" + objectId)
+                        new ResourceNotFoundException(
+                                "Metadata not found for objectId=" + objectId
+                        )
                 );
     }
 }
+
+    /* ===================== CREATE ===================== */

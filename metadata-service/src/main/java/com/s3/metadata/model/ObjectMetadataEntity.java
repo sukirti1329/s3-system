@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 @Entity
 @Table(name = "object_metadata")
 @Builder
@@ -24,7 +25,7 @@ public class ObjectMetadataEntity {
 
     @Id
     @GeneratedValue
-    @org.hibernate.annotations.UuidGenerator   // REQUIRED
+    @org.hibernate.annotations.UuidGenerator
     @Column(nullable = false, updatable = false)
     private UUID id;
 
@@ -43,7 +44,12 @@ public class ObjectMetadataEntity {
     @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "metadata", cascade = CascadeType.ALL, orphanRemoval = true,  fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "metadata",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     @Builder.Default
     private List<ObjectTagEntity> tags = new ArrayList<>();
 
@@ -53,7 +59,6 @@ public class ObjectMetadataEntity {
     @Column(name = "active_version")
     private Integer activeVersion;
 
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant createdAt;
@@ -61,4 +66,20 @@ public class ObjectMetadataEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant updatedAt;
+
+    // ✅ ADD HELPER METHODS
+    public void addTag(ObjectTagEntity tag) {
+        tags.add(tag);
+        tag.setMetadata(this);
+    }
+
+    public void removeTag(ObjectTagEntity tag) {
+        tags.remove(tag);
+        tag.setMetadata(null);
+    }
+
+    public void clearTags() {
+        // Create a copy to avoid ConcurrentModificationException
+        new ArrayList<>(tags).forEach(this::removeTag);
+    }
 }

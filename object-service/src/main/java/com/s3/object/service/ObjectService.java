@@ -3,6 +3,7 @@ package com.s3.object.service;
 import com.s3.common.dto.request.CreateObjectRequestDTO;
 import com.s3.common.dto.request.UpdateObjectRequestDTO;
 import com.s3.common.dto.response.ObjectResponseDTO;
+import com.s3.common.enums.AccessLevel;
 import com.s3.common.exception.InvalidRequestException;
 import com.s3.common.exception.ResourceNotFoundException;
 import com.s3.common.logging.LoggingUtil;
@@ -212,8 +213,8 @@ public class ObjectService {
         if (createObjectRequestDTO.getVersionEnabled() == null) {
             createObjectRequestDTO.setVersionEnabled(true);
         }
-        if (!StringUtils.hasText(createObjectRequestDTO.getAccessLevel())) {
-            createObjectRequestDTO.setAccessLevel("PRIVATE");
+        if (!StringUtils.hasText(createObjectRequestDTO.getAccessLevel().toString())) {
+            createObjectRequestDTO.setAccessLevel(AccessLevel.PRIVATE);
         }
 
         return createObjectRequestDTO;

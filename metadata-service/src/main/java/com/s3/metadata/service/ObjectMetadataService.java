@@ -13,17 +13,13 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-
 
 @Service
 @Transactional
 public class ObjectMetadataService {
 
-    private static final Logger log =
-            LoggingUtil.getLogger(ObjectMetadataService.class);
+    private static final Logger log = LoggingUtil.getLogger(ObjectMetadataService.class);
 
     private final ObjectMetadataRepository repository;
     private final ObjectMetadataMapper mapper;
@@ -40,25 +36,28 @@ public class ObjectMetadataService {
     }
 
     /* ===================== CREATE ===================== */
-   @Transactional
+    @Transactional
     public ObjectMetadataResponseDTO create(
             CreateObjectMetadataDTO dto,
             String ownerId
     ) {
-
         log.info("Creating metadata for objectId={}", dto.getObjectId());
 
+        // ✅ MapStruct creates entity using no-arg constructor + setters
         ObjectMetadataEntity entity = mapper.toEntity(dto);
-        //entity.setId(UUID.randomUUID());
         entity.setOwnerId(ownerId);
         entity.setAccessLevel(dto.getAccessLevel());
         entity.setActiveVersion(1);
 
+        // ✅ Apply tags BEFORE saving
         applyTags(entity, dto.getTags());
+
+        log.info("Entity before save - tags count: {}", entity.getTags().size());
 
         ObjectMetadataEntity saved = repository.save(entity);
 
-        // ✅ Correct call
+        log.info("Entity after save - tags count: {}", saved.getTags().size());
+
         versionService.createInitialVersion(
                 dto.getObjectId(),
                 ownerId
@@ -68,13 +67,11 @@ public class ObjectMetadataService {
     }
 
     /* ===================== UPDATE ===================== */
-
     @Transactional
     public ObjectMetadataResponseDTO update(
             String objectId,
             UpdateObjectMetadataDTO dto
     ) {
-
         ObjectMetadataEntity entity = repository
                 .findByObjectId(objectId)
                 .orElseThrow(() ->
@@ -84,9 +81,11 @@ public class ObjectMetadataService {
                 );
 
         mapper.updateEntity(dto, entity);
-        applyTags(entity, dto.getTags());
 
-        ObjectMetadataEntity updated = repository.saveAndFlush(entity);
+        // ✅ Update tags if provided
+        if (dto.getTags() != null) {
+            applyTags(entity, dto.getTags());
+        }
 
         if (Boolean.TRUE.equals(dto.getVersioningEnabled())) {
             versionService.createNewVersion(
@@ -96,14 +95,14 @@ public class ObjectMetadataService {
             entity.setActiveVersion(entity.getActiveVersion() + 1);
         }
 
+        ObjectMetadataEntity updated = repository.save(entity);
+
         return mapper.toResponse(updated);
     }
 
     /* ===================== DELETE ===================== */
-
     @Transactional
     public void deleteByObjectId(String objectId) {
-
         ObjectMetadataEntity metadata = repository
                 .findByObjectId(objectId)
                 .orElseThrow(() ->
@@ -121,22 +120,31 @@ public class ObjectMetadataService {
             ObjectMetadataEntity entity,
             List<String> tags
     ) {
-        entity.getTags().clear();
+        log.info("Applying tags - current count: {}, new tags: {}",
+                entity.getTags() != null ? entity.getTags().size() : 0,
+                tags);
+
+        // ✅ Clear existing tags properly using helper method
+        entity.clearTags();
+
         if (tags == null || tags.isEmpty()) {
+            log.info("No tags to apply");
             return;
         }
-        for (String tag : tags) {
-            entity.getTags().add(
-                    ObjectTagEntity.builder()
-                            .tag(tag)
-                            .metadata(entity) // owning side
-                            .build()
-            );
+
+        // ✅ Add new tags using helper method
+        for (String tagValue : tags) {
+            ObjectTagEntity tag = ObjectTagEntity.builder()
+                    .tag(tagValue)
+                    .build();
+            entity.addTag(tag);  // This sets both sides of the relationship
+            log.info("Added tag: {} to entity", tagValue);
         }
+
+        log.info("Final tags count after apply: {}", entity.getTags().size());
     }
 
     /* ===================== GET ===================== */
-
     @Transactional(readOnly = true)
     public ObjectMetadataResponseDTO getByObjectId(String objectId) {
         return repository.findByObjectId(objectId)
@@ -148,5 +156,3 @@ public class ObjectMetadataService {
                 );
     }
 }
-
-    /* ===================== CREATE ===================== */

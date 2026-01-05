@@ -3,6 +3,7 @@ package com.s3.object.controller;
 import com.s3.common.dto.request.CreateObjectRequestDTO;
 import com.s3.common.dto.request.UpdateObjectRequestDTO;
 import com.s3.common.dto.response.ObjectResponseDTO;
+import com.s3.common.enums.AccessLevel;
 import com.s3.common.logging.LoggingUtil;
 import com.s3.common.response.ApiResponse;
 import com.s3.common.security.JwtUserPrincipal;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -52,14 +54,24 @@ public class ObjectController {
     public ResponseEntity<ApiResponse<ObjectResponseDTO>> uploadObject(
             @PathVariable String bucketName,
             @RequestPart("file") MultipartFile file,
-            @ModelAttribute CreateObjectRequestDTO metadata,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "tags", required = false) List<String> tags,
+            @RequestParam(value = "accessLevel", defaultValue = "PRIVATE") AccessLevel accessLevel,
+            @RequestParam(value = "versionEnabled", defaultValue = "true") Boolean versionEnabled,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) throws IOException {
 
+        // Build the DTO
+        CreateObjectRequestDTO metadata = CreateObjectRequestDTO.builder()
+                .description(description)
+                .tags(tags != null ? tags : new ArrayList<>())
+                .accessLevel(accessLevel)
+                .versionEnabled(versionEnabled)
+                .build();
+
         log.info(
-                "User [{}] uploading object [{}] to bucket [{}] with metadata [{}]",
+                "User [{}] uploading object to bucket [{}] with metadata [{}]",
                 user.getUserId(),
-                file.getOriginalFilename(),
                 bucketName,
                 metadata
         );

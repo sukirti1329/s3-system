@@ -42,7 +42,7 @@ public class ObjectEventService {
                         .objectKey(entity.getFileName())
                         .description(request.getDescription())
                         .tags(request.getTags())
-                        .accessLevel(request.getAccessLevel())
+                        .accessLevel(request.getAccessLevel().toString())
                         .versionEnabled(request.getVersionEnabled())
                         .build();
 

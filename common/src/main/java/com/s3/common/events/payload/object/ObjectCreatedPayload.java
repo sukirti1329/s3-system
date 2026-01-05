@@ -2,14 +2,16 @@ package com.s3.common.events.payload.object;
 
 import com.s3.common.events.payload.S3EventPayload;
 import lombok.*;
+import lombok.extern.jackson.Jacksonized;
 
 import java.util.List;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Jacksonized
 public class ObjectCreatedPayload implements S3EventPayload {
 
     private String objectId;

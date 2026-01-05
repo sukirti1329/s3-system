@@ -1,6 +1,7 @@
 package com.s3.metadata.event.consumer;
 
 import com.s3.common.events.model.S3Event;
+import com.s3.common.events.payload.S3EventPayload;
 import com.s3.common.logging.LoggingUtil;
 import com.s3.metadata.event.handler.ObjectEventHandler;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -21,12 +22,12 @@ public class MetadataEventConsumer {
     }
 
     @KafkaListener(
-            topics = "${s3.events.topics.object}",
-            groupId = "${spring.kafka.consumer.group-id}"
+            topics = "s3.object.events",
+            groupId = "metadata-service"
     )
-    public void consume(ConsumerRecord<String, S3Event<?>> record) {
+    public void consume(ConsumerRecord<String, S3Event<? extends S3EventPayload>> record) {
 
-        S3Event<?> event = record.value();
+        S3Event<? extends S3EventPayload> event = record.value();
 
         log.info(
                 "Consumed event [type={}, eventId={}, key={}]",

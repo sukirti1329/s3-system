@@ -2,6 +2,7 @@ package com.s3.common.events.payload.object;
 
 import com.s3.common.events.payload.S3EventPayload;
 import lombok.*;
+import lombok.extern.jackson.Jacksonized;
 
 import java.util.List;
 
@@ -9,6 +10,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Jacksonized
 public class ObjectUpdatedPayload implements S3EventPayload {
 
     private String objectId;

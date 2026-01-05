@@ -40,7 +40,7 @@ public class ObjectMetadataService {
     }
 
     /* ===================== CREATE ===================== */
-
+   @Transactional
     public ObjectMetadataResponseDTO create(
             CreateObjectMetadataDTO dto,
             String ownerId
@@ -49,7 +49,7 @@ public class ObjectMetadataService {
         log.info("Creating metadata for objectId={}", dto.getObjectId());
 
         ObjectMetadataEntity entity = mapper.toEntity(dto);
-        entity.setId(UUID.randomUUID());
+        //entity.setId(UUID.randomUUID());
         entity.setOwnerId(ownerId);
         entity.setAccessLevel(dto.getAccessLevel());
         entity.setActiveVersion(1);
@@ -69,6 +69,7 @@ public class ObjectMetadataService {
 
     /* ===================== UPDATE ===================== */
 
+    @Transactional
     public ObjectMetadataResponseDTO update(
             String objectId,
             UpdateObjectMetadataDTO dto
@@ -116,24 +117,19 @@ public class ObjectMetadataService {
     }
 
     /* ===================== TAGS ===================== */
-
     private void applyTags(
             ObjectMetadataEntity entity,
             List<String> tags
     ) {
-        if (tags == null) return;
-
-        if (entity.getTags() == null) {
-            entity.setTags(new ArrayList<>());
-        } else {
-            entity.getTags().clear();
+        entity.getTags().clear();
+        if (tags == null || tags.isEmpty()) {
+            return;
         }
-
         for (String tag : tags) {
             entity.getTags().add(
                     ObjectTagEntity.builder()
                             .tag(tag)
-                            .metadata(entity)
+                            .metadata(entity) // owning side
                             .build()
             );
         }

@@ -14,7 +14,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", builder = @org.mapstruct.Builder(disableBuilder = false))
+//@Mapper(componentModel = "spring", builder = @org.mapstruct.Builder(disableBuilder = false))
+@Mapper(
+        componentModel = "spring",
+        builder = @org.mapstruct.Builder(disableBuilder = true)
+)
 public interface ObjectMetadataMapper {
 
     /* ===================== CREATE ===================== */

@@ -11,7 +11,14 @@ import java.util.UUID;
 
 
 @Entity
-@Table(name = "object_tags")
+@Table(
+        name = "object_tags",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        columnNames = {"metadata_id", "tag"}
+                )
+        }
+)
 @Data
 @Builder
 @AllArgsConstructor
@@ -20,6 +27,7 @@ public class ObjectTagEntity {
 
     @Id
     @GeneratedValue
+    @org.hibernate.annotations.UuidGenerator   // REQUIRED
     @Column(nullable = false, updatable = false)
     private UUID id;
 
@@ -27,6 +35,7 @@ public class ObjectTagEntity {
     @JoinColumn(name = "metadata_id", nullable = false)
     private ObjectMetadataEntity metadata;
 
+    @Column(nullable = false, length = 100)
     private String tag;
 
     @CreationTimestamp

@@ -24,6 +24,7 @@ public class ObjectMetadataEntity {
 
     @Id
     @GeneratedValue
+    @org.hibernate.annotations.UuidGenerator   // REQUIRED
     @Column(nullable = false, updatable = false)
     private UUID id;
 

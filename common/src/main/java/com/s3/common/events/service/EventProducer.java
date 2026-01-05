@@ -2,10 +2,16 @@ package com.s3.common.events.service;
 import com.s3.common.events.config.S3EventProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@ConditionalOnProperty(
+        prefix = "s3.events",
+        name = "enabled",
+        havingValue = "true"
+)
 public class EventProducer {
 
     private static final Logger log = LoggerFactory.getLogger(EventProducer.class);

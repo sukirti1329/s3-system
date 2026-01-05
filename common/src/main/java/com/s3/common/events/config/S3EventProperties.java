@@ -1,12 +1,11 @@
 package com.s3.common.events.config;
 
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
 
-@Configuration
-@ConfigurationProperties(prefix = "s3.event")
+@ConfigurationProperties(prefix = "s3.events")
 public class S3EventProperties {
 
     private String serviceName;

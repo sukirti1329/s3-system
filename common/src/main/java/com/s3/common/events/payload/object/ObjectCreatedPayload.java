@@ -15,11 +15,6 @@ public class ObjectCreatedPayload implements S3EventPayload {
     private String objectId;
     private String bucketName;
     private String objectKey;
-
-    private Long size;
-    private String checksum;
-    private String contentType;
-
     private String description;
     private List<String> tags;
     private String accessLevel;

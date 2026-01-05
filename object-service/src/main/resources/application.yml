@@ -59,7 +59,8 @@ auth:
     expiration-ms: 86400000
 
 s3:
-  event:
+  events:
+    enabled: true
     service-name: ${spring.application.name}
     topics:
       object: s3.object.events

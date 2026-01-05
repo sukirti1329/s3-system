@@ -45,3 +45,6 @@ auth:
     # For example (matches your bucket-service)
     secret: "b4J2zwtv5TIis+vW0hkNpnKUq9frHNF+IGpEZ4a6t+M="
     expiration-ms: 86400000
+s3:
+  events:
+    enabled: false

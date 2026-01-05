@@ -74,12 +74,13 @@ public class ObjectService {
 
         if (repository.existsByBucketNameAndFileName(bucketName, fileName)) {
             throw new InvalidRequestException("Object already exists");
-        }
+        }//TODO: Add check if file exist in directory
 
         Path bucketPath = Paths.get(storageLocation, bucketName);
         Files.createDirectories(bucketPath);
 
         Path filePath = bucketPath.resolve(file.getOriginalFilename());
+        //TODO: This should in last step
         Files.copy(file.getInputStream(), filePath);
 
         String contentType = setContentType(file.getContentType());

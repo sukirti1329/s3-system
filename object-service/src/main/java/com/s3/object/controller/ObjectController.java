@@ -9,6 +9,7 @@ import com.s3.common.security.JwtUserPrincipal;
 import com.s3.object.service.ObjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
@@ -44,48 +45,35 @@ public class ObjectController {
     // ----------------------------------------------------------------------
     @PostMapping(
             value = "/{bucketName}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @Operation(
-            summary = "Upload object to bucket",
-            description = "Uploads a new object with metadata into the specified bucket"
-    )
-    public ResponseEntity<ApiResponse<ObjectResponseDTO>> createObject(
-            @Parameter(description = "Bucket name", required = true)
+    @Operation(summary = "Upload object to bucket")
+    public ResponseEntity<ApiResponse<ObjectResponseDTO>> uploadObject(
             @PathVariable String bucketName,
-
-            @Parameter(
-                    description = "File to upload",
-                    required = true,
-                    schema = @Schema(type = "string", format = "binary")
-            )
-            @RequestParam("file")
-            MultipartFile file,
-
-            @Parameter(
-                    description = "Create object metadata as JSON",
-                    required = false,
-                    schema = @Schema(implementation = CreateObjectRequestDTO.class)
-            )
-            @RequestParam(value = "metadata", required = false)
-            String metadataJson,
-
+            @RequestPart("file") MultipartFile file,
+            @ModelAttribute CreateObjectRequestDTO metadata,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) throws IOException {
 
-        CreateObjectRequestDTO metadata = parseMetadata(metadataJson);
+        log.info(
+                "User [{}] uploading object [{}] to bucket [{}] with metadata [{}]",
+                user.getUserId(),
+                file.getOriginalFilename(),
+                bucketName,
+                metadata
+        );
 
-        ObjectResponseDTO response =
-                objectService.createObject(
-                        bucketName,
-                        user.getUserId(),
-                        file,
-                        metadata
-                );
+        ObjectResponseDTO objectRes = objectService.createObject(
+                bucketName,
+                user.getUserId(),
+                file,
+                metadata
+        );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response));
+                .body(ApiResponse.success(objectRes));
     }
 
     @PatchMapping("/{bucketName}/{objectName}")

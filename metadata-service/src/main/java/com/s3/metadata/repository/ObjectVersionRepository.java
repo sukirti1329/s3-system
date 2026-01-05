@@ -13,6 +13,7 @@ public interface ObjectVersionRepository
     Optional<ObjectVersionEntity> findByObjectIdAndIsActiveTrue(String objectId);
     int countByObjectId(String objectId);
 
+    Optional<ObjectVersionEntity> findTopByObjectIdOrderByVersionNumberDesc(String objectId);
     List<ObjectVersionEntity> findByObjectIdOrderByVersionNumberDesc(String objectId);
     Optional<ObjectVersionEntity> findByObjectIdAndVersionNumber(String objectId, int versionNumber);
 

@@ -1,62 +1,74 @@
--- =========================================================
--- TABLE: object_metadata
--- =========================================================
-CREATE TABLE object_metadata (
-    id UUID NOT NULL,
-    object_id VARCHAR(255) NOT NULL,
-    bucket_name VARCHAR(255),
-    owner_id VARCHAR(255),
-    access_level VARCHAR(255),
-    description VARCHAR(255),
-    versioning_enabled BOOLEAN DEFAULT TRUE,
-    active_version INT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- =====================================================
+-- METADATA TABLE
+-- =====================================================
 
-    CONSTRAINT object_metadata_pkey PRIMARY KEY (id),
-    CONSTRAINT uk_object_metadata_object_id UNIQUE (object_id),
+CREATE TABLE public.object_metadata (
+    id uuid NOT NULL,
+    access_level varchar(255) NULL,
+    bucket_name varchar(255) NULL,
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    description varchar(255) NULL,
+    object_id varchar(255) NOT NULL,
+    owner_id varchar(255) NOT NULL,
+    versioning_enabled bool NOT NULL DEFAULT true,
+    active_version int4 NULL,
+
+    CONSTRAINT object_metadata_pkey
+        PRIMARY KEY (id),
+
+    CONSTRAINT uk_object_metadata_object_id
+        UNIQUE (object_id),
+
     CONSTRAINT object_metadata_access_level_check
         CHECK (access_level IN ('PRIVATE', 'PUBLIC', 'SHARED'))
 );
 
--- =========================================================
--- TABLE: object_tags
--- =========================================================
-CREATE TABLE object_tags (
-    id UUID NOT NULL,
-    tag VARCHAR(255),
-    metadata_id UUID,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT object_tags_pkey PRIMARY KEY (id),
+CREATE INDEX idx_object_metadata_object_id
+    ON public.object_metadata (object_id);
+
+-- =====================================================
+-- TAGS TABLE
+-- =====================================================
+
+CREATE TABLE public.object_tags (
+    id uuid NOT NULL,
+    tag varchar(255) NULL,
+    metadata_id uuid NOT NULL,
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT object_tags_pkey
+        PRIMARY KEY (id),
+
     CONSTRAINT fk_object_tags_metadata
         FOREIGN KEY (metadata_id)
-        REFERENCES object_metadata (id)
+        REFERENCES public.object_metadata(id)
         ON DELETE CASCADE
 );
 
--- =========================================================
--- TABLE: object_versions
--- =========================================================
-CREATE TABLE object_versions (
-    id UUID NOT NULL,
-    object_id VARCHAR(255),
-    version_number INT NOT NULL,
-    checksum VARCHAR(255),
-    storage_path VARCHAR(255),
-    is_active BOOLEAN NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT object_versions_pkey PRIMARY KEY (id),
-    CONSTRAINT uq_object_version UNIQUE (object_id, version_number)
+CREATE INDEX idx_object_tags_metadata_id
+    ON public.object_tags (metadata_id);
+
+-- =====================================================
+-- VERSIONS TABLE
+-- =====================================================
+
+CREATE TABLE public.object_versions (
+    id uuid NOT NULL,
+    object_id varchar(255) NOT NULL,
+    owner_id varchar(255) NOT NULL,
+    version_number int4 NOT NULL,
+    is_active bool NOT NULL,
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT object_versions_pkey
+        PRIMARY KEY (id),
+
+    CONSTRAINT uk_object_versions_object_version
+        UNIQUE (object_id, version_number)
 );
 
--- =========================================================
--- INDEXES (Recommended)
--- =========================================================
-CREATE INDEX idx_object_metadata_object_id
-    ON object_metadata (object_id);
-
-CREATE INDEX idx_object_tags_metadata_id
-    ON object_tags (metadata_id);
-
-CREATE INDEX idx_object_versions_object_id
-    ON object_versions (object_id);
+-- Only one active version per object
+CREATE UNIQUE INDEX ux_object_versions_active
+    ON public.object_versions (object_id)
+    WHERE is_active = true;

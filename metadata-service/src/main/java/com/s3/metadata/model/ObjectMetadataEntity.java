@@ -9,14 +9,17 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 @Entity
 @Table(name = "object_metadata")
-@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ObjectMetadataEntity {
 
     @Id
@@ -27,18 +30,21 @@ public class ObjectMetadataEntity {
     @Column(nullable = false, unique = true)
     private String objectId;
 
+    @Column(name = "bucket_name")
     private String bucketName;
+
+    @Column(name = "owner_id", nullable = false)
     private String ownerId;
 
     @Enumerated(EnumType.STRING)
     private AccessLevel accessLevel;
 
+    @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "metadata", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ObjectTagEntity> tags;
-
-
+    @OneToMany(mappedBy = "metadata", cascade = CascadeType.ALL, orphanRemoval = true,  fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<ObjectTagEntity> tags = new ArrayList<>();
 
     @Column(name = "versioning_enabled", nullable = false)
     private boolean versioningEnabled = true;

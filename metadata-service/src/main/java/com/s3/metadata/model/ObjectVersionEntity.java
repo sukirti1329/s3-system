@@ -8,7 +8,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "object_versions")
+@Table(name = "object_versions", uniqueConstraints = @UniqueConstraint(
+        columnNames = {"object_id", "version_number"}))
 @Data
 @Builder
 @AllArgsConstructor
@@ -24,11 +25,11 @@ public class ObjectVersionEntity {
     @Column(nullable = false)
     private int versionNumber;
 
-    private String checksum;
-    private String storagePath;
-
     @Column(nullable = false)
     private boolean isActive;
+
+    @Column(nullable = false)
+    private String ownerId;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

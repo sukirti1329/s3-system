@@ -26,49 +26,60 @@ public class ObjectMetadataService {
 
     private final ObjectMetadataRepository repository;
     private final ObjectMetadataMapper mapper;
+    private final ObjectVersionService versionService;
 
-    public ObjectMetadataService(ObjectMetadataRepository repository, ObjectMetadataMapper mapper) {
+    public ObjectMetadataService(ObjectMetadataRepository repository, ObjectMetadataMapper mapper, ObjectVersionService versionService) {
         this.repository = repository;
         this.mapper = mapper;
+        this.versionService = versionService;
     }
 
     /* ===================== CREATE ===================== */
+    public ObjectMetadataResponseDTO create(
+            CreateObjectMetadataDTO dto,
+            String ownerId
+    ) {log.info(
+                "Creating metadata for objectId={} by user={}",
+                dto.getObjectId(),
+                ownerId
+        );
+        ObjectMetadataEntity entity = mapper.toEntity(dto);
+        entity.setId(UUID.randomUUID());
+        entity.setOwnerId(ownerId);
+        entity.setAccessLevel(dto.getAccessLevel());
+        entity.setActiveVersion(1);
+        applyTags(entity, dto.getTags());
+        ObjectMetadataEntity saved = repository.save(entity);
 
-    public ObjectMetadataResponseDTO create(CreateObjectMetadataDTO dto, String ownerId) {
-        {
-            log.info("Creating metadata for objectId={} by user={}",
-                    dto.getObjectId(), ownerId);
-
-            ObjectMetadataEntity entity = mapper.toEntity(dto);
-            entity.setId(UUID.randomUUID());
-            entity.setOwnerId(ownerId);
-            entity.setAccessLevel(dto.getAccessLevel());
-            entity.setActiveVersion(1);
-            applyTags(entity, dto.getTags());
-
-            ObjectMetadataEntity saved = repository.save(entity);
-
-            log.info("Metadata created for objectId={}", dto.getObjectId());
-            return mapper.toResponse(saved);
-        }
+        //  Versioning belongs here
+       // versionService.createInitialVersion(saved, dto);
+        log.info(
+                "Metadata + v1 created for objectId={}",
+                dto.getObjectId()
+        );
+        return mapper.toResponse(saved);
     }
+
+    /* ===================== UPDATE ===================== */
 
     /* ===================== UPDATE ===================== */
 
     public ObjectMetadataResponseDTO update(String objectId, UpdateObjectMetadataDTO dto) {
         log.info("Updating metadata for objectId={}", objectId);
-
         ObjectMetadataEntity entity = repository
                 .findByObjectId(objectId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Metadata not found for objectId=" + objectId));
-
+                                "Metadata not found for objectId=" + objectId
+                        )
+                );
         mapper.updateEntity(dto, entity);
         applyTags(entity, dto.getTags());
-
         ObjectMetadataEntity updated = repository.saveAndFlush(entity);
-
+        //  Versioning logic lives here
+        if (Boolean.TRUE.equals(dto.getVersioningEnabled())) {
+            //versionService.createNewVersion(updated, dto);
+        }
         log.info("Metadata updated for objectId={}", objectId);
         return mapper.toResponse(updated);
     }
@@ -90,21 +101,6 @@ public class ObjectMetadataService {
         }
     }
 
-    private void updateTags(ObjectMetadataEntity entity, List<String> tags) {
-        if (tags == null) {
-            return;
-        }
-        // Clear existing tags (orphanRemoval = true handles delete)
-        entity.getTags().clear();
-        // Re-create tags with proper back-reference
-        for (String tag : tags) {
-            ObjectTagEntity tagEntity = ObjectTagEntity.builder()
-                    .tag(tag)
-                    .metadata(entity)
-                    .build();
-            entity.getTags().add(tagEntity);
-        }
-    }
     /* ===================== GET ===================== */
 
     @Transactional(readOnly = true)

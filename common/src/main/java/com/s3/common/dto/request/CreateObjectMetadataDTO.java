@@ -19,7 +19,6 @@ public class CreateObjectMetadataDTO {
     @Schema(description = "Bucket name", example = "user-photos", required = true)
     private String bucketName;
 
-
     @Schema(description = "Access level of the object", example = "PRIVATE")
     private AccessLevel accessLevel = AccessLevel.PRIVATE;
 

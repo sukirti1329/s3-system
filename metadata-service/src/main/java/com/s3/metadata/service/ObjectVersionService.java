@@ -1,8 +1,7 @@
 package com.s3.metadata.service;
 
-import org.springframework.stereotype.Service;
-
-import com.s3.common.dto.request.CreateObjectVersionDTO;
+import com.s3.common.dto.request.CreateObjectMetadataDTO;
+import com.s3.common.dto.request.UpdateObjectMetadataDTO;
 import com.s3.common.dto.response.ObjectVersionResponseDTO;
 import com.s3.common.logging.LoggingUtil;
 import com.s3.metadata.mapper.ObjectVersionMapper;
@@ -10,6 +9,7 @@ import com.s3.metadata.model.ObjectVersionEntity;
 import com.s3.metadata.repository.ObjectVersionRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -18,47 +18,78 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ObjectVersionService {
 
-    private static final Logger log = LoggingUtil.getLogger(ObjectVersionService.class);
+    private static final Logger log =
+            LoggingUtil.getLogger(ObjectVersionService.class);
 
     private final ObjectVersionRepository repository;
     private final ObjectVersionMapper mapper;
 
-    /* ================= CREATE NEW VERSION ================= */
+    /* =====================================================
+       CREATE INITIAL VERSION (OBJECT_CREATED)
+       ===================================================== */
 
     @Transactional
-    public void createVersion(String objectId, CreateObjectVersionDTO dto) {
+    public void createInitialVersion(CreateObjectMetadataDTO metadata) {
+        log.info("Creating initial version (v1) for object [{}]", metadata.getObjectId());
+        ObjectVersionEntity version = ObjectVersionEntity.builder()
+                .objectId(metadata.getObjectId())
+                .versionNumber(1)
+                //.checksum(metadata.getChecksum())
+               // .storagePath(metadata.getStoragePath())
+                .isActive(true)
+                .build();
 
+        repository.save(version);
+        log.info("Initial version [v1] created for object [{}]", metadata.getObjectId()
+        );
+    }
+
+    /* =====================================================
+       CREATE NEW VERSION (OBJECT_UPDATED)
+       ===================================================== */
+
+    @Transactional
+    public void createNewVersion(String objectId, UpdateObjectMetadataDTO update
+    ) {
         log.info("Creating new version for object [{}]", objectId);
-
+        //  Deactivate current active version
         repository.findByObjectIdAndIsActiveTrue(objectId)
                 .ifPresent(active -> {
                     active.setActive(false);
                     repository.save(active);
                 });
 
+        //  Determine next version number
         int nextVersion = repository
-                .findByObjectIdOrderByVersionNumberDesc(objectId)
-                .stream()
-                .findFirst()
+                .findTopByObjectIdOrderByVersionNumberDesc(objectId)
                 .map(v -> v.getVersionNumber() + 1)
                 .orElse(1);
 
+        // Create new version
         ObjectVersionEntity version = ObjectVersionEntity.builder()
                 .objectId(objectId)
                 .versionNumber(nextVersion)
-                .checksum(dto.getChecksum())
-                .storagePath(dto.getStoragePath())
+               // .checksum(update.getChecksum())
+              //  .storagePath(update.getStoragePath())
                 .isActive(true)
                 .build();
 
         repository.save(version);
-
-        log.info("Version [{}] created for object [{}]", nextVersion, objectId);
+        log.info(
+                "Version [v{}] created for object [{}]",
+                nextVersion,
+                objectId
+        );
     }
 
-    /* ================= LIST VERSIONS ================= */
+    /* =====================================================
+       LIST VERSIONS
+       ===================================================== */
 
-    public List<ObjectVersionResponseDTO> listVersions(String objectId) {
+    @Transactional(readOnly = true)
+    public List<ObjectVersionResponseDTO> listVersions(
+            String objectId
+    ) {
 
         log.debug("Listing versions for object [{}]", objectId);
 
@@ -67,13 +98,17 @@ public class ObjectVersionService {
         );
     }
 
-    /* ================= ROLLBACK ================= */
+    /* =====================================================
+       ROLLBACK
+       ===================================================== */
 
     @Transactional
-    public void rollback(String objectId, int versionNumber) {
+    public void rollback(
+            String objectId,
+            int versionNumber
+    ) {
 
         log.warn("Rolling back object [{}] to version [{}]", objectId, versionNumber);
-
         ObjectVersionEntity target = repository
                 .findByObjectIdAndVersionNumber(objectId, versionNumber)
                 .orElseThrow(() ->
@@ -89,6 +124,10 @@ public class ObjectVersionService {
         target.setActive(true);
         repository.save(target);
 
-        log.info("Rollback completed for object [{}]", objectId);
+        log.info(
+                "Rollback completed for object [{}] to version [{}]",
+                objectId,
+                versionNumber
+        );
     }
 }

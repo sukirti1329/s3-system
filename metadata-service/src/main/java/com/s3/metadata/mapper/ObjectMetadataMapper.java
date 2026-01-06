@@ -34,8 +34,8 @@ public interface ObjectMetadataMapper {
     @Mapping(target = "bucketName", ignore = true)
     @Mapping(target = "ownerId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)  // ✅ Let @UpdateTimestamp handle it
-    @Mapping(target = "tags", ignore = true)  // ✅ Handle tags manually in service
+    @Mapping(target = "updatedAt", ignore = true)  //  Let @UpdateTimestamp handle it
+    @Mapping(target = "tags", ignore = true)  //  Handle tags manually in service
     void updateEntity(UpdateObjectMetadataDTO dto,
                       @MappingTarget ObjectMetadataEntity entity);
 

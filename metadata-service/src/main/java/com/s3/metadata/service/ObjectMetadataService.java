@@ -60,7 +60,9 @@ public class ObjectMetadataService {
 
         versionService.createInitialVersion(
                 dto.getObjectId(),
-                ownerId
+                ownerId,
+                dto.getBucketName(),
+                dto.isVersioningEnabled()
         );
 
         return mapper.toResponse(saved);
@@ -88,9 +90,7 @@ public class ObjectMetadataService {
         }
 
         if (Boolean.TRUE.equals(dto.isVersioningEnabled())) {
-            versionService.createNewVersion(
-                    objectId,
-                    entity.getOwnerId()
+            versionService.createNewVersion(objectId, entity.getOwnerId(), dto.getBucketName(), true
             );
             entity.setActiveVersion(entity.getActiveVersion() + 1);
         }

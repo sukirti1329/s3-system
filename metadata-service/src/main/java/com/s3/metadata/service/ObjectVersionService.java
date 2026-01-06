@@ -1,7 +1,5 @@
 package com.s3.metadata.service;
 
-import com.s3.common.dto.request.CreateObjectMetadataDTO;
-import com.s3.common.dto.request.UpdateObjectMetadataDTO;
 import com.s3.common.dto.response.ObjectVersionResponseDTO;
 import com.s3.common.exception.ResourceNotFoundException;
 import com.s3.common.logging.LoggingUtil;
@@ -33,15 +31,23 @@ public class ObjectVersionService {
     @Transactional
     public void createInitialVersion(
             String objectId,
-            String ownerId
+            String ownerId,
+            String bucketName,
+            boolean versioningEnabled
     ) {
 
-        log.info("Creating initial version (v1) for object [{}]", objectId);
+        log.info(
+                "Creating initial version (v1) for object [{}], bucket [{}], versioningEnabled={}",
+                objectId, bucketName, versioningEnabled
+        );
 
+        // Even if versioning is disabled, we still create v1
         ObjectVersionEntity version = ObjectVersionEntity.builder()
                 .id(UUID.randomUUID())
                 .objectId(objectId)
                 .ownerId(ownerId)
+                .bucketName(bucketName)
+                .versioningEnabled(versioningEnabled)
                 .versionNumber(1)
                 .isActive(true)
                 .build();
@@ -58,10 +64,24 @@ public class ObjectVersionService {
     @Transactional
     public void createNewVersion(
             String objectId,
-            String ownerId
+            String ownerId,
+            String bucketName,
+            boolean versioningEnabled
     ) {
 
-        log.info("Creating new version for object [{}]", objectId);
+        // Guard: if versioning is disabled, do NOT create a new version
+        if (!versioningEnabled) {
+            log.info(
+                    "Versioning disabled for object [{}], skipping version creation",
+                    objectId
+            );
+            return;
+        }
+
+        log.info(
+                "Creating new version for object [{}], bucket [{}]",
+                objectId, bucketName
+        );
 
         repository.findByObjectIdAndIsActiveTrue(objectId)
                 .ifPresent(active -> {
@@ -78,13 +98,18 @@ public class ObjectVersionService {
                 .id(UUID.randomUUID())
                 .objectId(objectId)
                 .ownerId(ownerId)
+                .bucketName(bucketName)
+                .versioningEnabled(versioningEnabled)
                 .versionNumber(nextVersion)
                 .isActive(true)
                 .build();
 
         repository.save(version);
 
-        log.info("Version [v{}] created for object [{}]", nextVersion, objectId);
+        log.info(
+                "Version [v{}] created for object [{}]",
+                nextVersion, objectId
+        );
     }
 
     /* ===================== LIST ===================== */
@@ -115,6 +140,11 @@ public class ObjectVersionService {
 
         target.setActive(true);
         repository.save(target);
+
+        log.info(
+                "Rolled back object [{}] to version [{}]",
+                objectId, versionNumber
+        );
     }
 
     /* ===================== DELETE ===================== */
@@ -123,6 +153,8 @@ public class ObjectVersionService {
     public void deleteByObjectId(String objectId) {
         repository.deleteByObjectId(objectId);
     }
+
+    /* ===================== ACTIVE VERSION ===================== */
 
     @Transactional(readOnly = true)
     public ObjectVersionResponseDTO getActiveVersion(String objectId) {

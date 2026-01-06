@@ -32,6 +32,13 @@ public class ObjectVersionEntity {
     private boolean isActive;
 
 
+    @Column(name = "bucket_name", nullable = false)
+    private String bucketName;
+
+    @Column(name = "versioning_enabled", nullable = false)
+    private boolean versioningEnabled;
+
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant createdAt;

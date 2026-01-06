@@ -2,9 +2,7 @@ package com.s3.common.dto.request;
 
 import com.s3.common.enums.AccessLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -14,6 +12,9 @@ public class UpdateObjectMetadataDTO {
 
     @Schema(description = "Access level of the object", example = "PRIVATE")
     private AccessLevel accessLevel = AccessLevel.PRIVATE;
+
+    @Schema(description = "Bucket name", example = "user-photos")
+    private String bucketName;
 
     @Schema(description = "Optional description of the object")
     private String description;

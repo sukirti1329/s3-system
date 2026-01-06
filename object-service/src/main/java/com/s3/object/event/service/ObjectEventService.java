@@ -1,4 +1,4 @@
-package com.s3.object.event;
+package com.s3.object.event.service;
 
 import com.s3.common.dto.request.CreateObjectRequestDTO;
 import com.s3.common.dto.request.UpdateObjectRequestDTO;

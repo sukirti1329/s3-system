@@ -3,11 +3,10 @@ package com.s3.object.event.handler;
 import com.s3.common.events.model.S3Event;
 import com.s3.common.events.payload.bucket.BucketDeletedPayload;
 import com.s3.common.events.payload.bucket.BucketUpdatedPayload;
-import com.s3.common.events.payload.object.ObjectCreatedPayload;
-import com.s3.common.events.payload.object.ObjectDeletedPayload;
-import com.s3.common.events.payload.object.ObjectUpdatedPayload;
+
 import com.s3.common.logging.LoggingUtil;
-import com.s3.object.event.mapper.BucketEventMapper;
+import com.s3.object.event.idempotency.ObjectEventIdempotencyService;
+
 import com.s3.object.service.ObjectService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,18 +20,17 @@ public class BucketEventHandler {
             LoggingUtil.getLogger(BucketEventHandler.class);
 
     private final ObjectService objectService;
-    private final BucketEventMapper mapper;
-    //private final EventIdempotencyService idempotencyService;
+    private final ObjectEventIdempotencyService idempotencyService;
 
     public void handle(S3Event<?> event) {
 
-//        if (idempotencyService.isAlreadyProcessed(event.getEventId())) {
-//            log.warn(
-//                    "Skipping already processed eventId={}",
-//                    event.getEventId()
-//            );
-//            return;
-//        }
+        if (idempotencyService.isAlreadyProcessed(event.getEventId())) {
+            log.warn(
+                    "Skipping already processed eventId={}",
+                    event.getEventId()
+            );
+            return;
+        }
 
         switch (event.getEventType()) {
 
@@ -51,11 +49,11 @@ public class BucketEventHandler {
             );
         }
 
-//        idempotencyService.markProcessed(
-//                event.getEventId(),
-//                event.getEventType().name(),
-//                event.getSourceService()
-//        );
+        idempotencyService.markProcessed(
+                event.getEventId(),
+                event.getEventType().name(),
+                event.getSourceService()
+        );
     }
 
     private void handleBucketUpdated(S3Event<BucketUpdatedPayload> event) {

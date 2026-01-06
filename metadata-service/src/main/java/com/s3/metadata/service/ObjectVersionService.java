@@ -166,4 +166,9 @@ public class ObjectVersionService {
                         )
                 );
     }
+
+    @Transactional
+    public void updateVersioningFlag(String objectId, boolean enabled) {
+        repository.updateVersioningEnabled(objectId, enabled);
+    }
 }

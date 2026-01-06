@@ -89,10 +89,14 @@ public class ObjectMetadataService {
             applyTags(entity, dto.getTags());
         }
 
+
+
         if (Boolean.TRUE.equals(dto.isVersioningEnabled())) {
             versionService.createNewVersion(objectId, entity.getOwnerId(), dto.getBucketName(), true
             );
             entity.setActiveVersion(entity.getActiveVersion() + 1);
+        }else{
+            versionService.updateVersioningFlag(objectId, dto.isVersioningEnabled());
         }
 
         ObjectMetadataEntity updated = repository.save(entity);

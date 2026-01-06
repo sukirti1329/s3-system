@@ -1,6 +1,7 @@
 package com.s3.object.event.handler;
 
 import com.s3.common.events.model.S3Event;
+import com.s3.common.events.payload.bucket.BucketDeletedPayload;
 import com.s3.common.events.payload.bucket.BucketUpdatedPayload;
 import com.s3.common.events.payload.object.ObjectCreatedPayload;
 import com.s3.common.events.payload.object.ObjectDeletedPayload;
@@ -39,22 +40,11 @@ public class BucketEventHandler {
                     (S3Event<BucketUpdatedPayload>) event
             );
 
-//            case BUCKET_DELETED -> {
-//                ObjectUpdatedPayload payload =
-//                        (ObjectUpdatedPayload) event.getPayload();
-//
-//                metadataService.update(
-//                        payload.getObjectId(),
-//                        mapper.toUpdateDto(payload)
-//                );
-//            }
+            case BUCKET_DELETED -> handleBucketDeleted(
+                    (S3Event<BucketDeletedPayload>) event
+            );
 
-//            case OBJECT_DELETED -> {
-//                ObjectDeletedPayload payload =
-//                        (ObjectDeletedPayload) event.getPayload();
-//
-//                metadataService.deleteByObjectId(payload.getObjectId());
-//            }
+
             default -> log.debug(
                     "Ignoring event type {}",
                     event.getEventType()
@@ -75,6 +65,17 @@ public class BucketEventHandler {
                 payload.getBucketName(),
                 event.getOwnerId(),
                 payload.isVersioningEnabled()
+        );
+    }
+
+    private void handleBucketDeleted(
+            S3Event<BucketDeletedPayload> event
+    ) {
+        BucketDeletedPayload payload = event.getPayload();
+
+        objectService.deleteObjectsByBucket(
+                payload.getBucketName(),
+                event.getOwnerId()
         );
     }
 }

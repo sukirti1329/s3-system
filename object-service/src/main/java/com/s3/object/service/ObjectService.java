@@ -161,26 +161,6 @@ public class ObjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Object not found"));
     }
 
-    public void deleteObject(String bucketName, String objectName, String userId) {
-        validateBucket(bucketName);
-
-        ObjectEntity entity = repository
-                .findByBucketNameAndFileName(bucketName, objectName)
-                .orElseThrow(() -> new ResourceNotFoundException("Object not found"));
-
-        repository.delete(entity);
-        // Delete file
-        try {
-            Files.deleteIfExists(Paths.get(entity.getStoragePath()));
-        } catch (IOException e) {
-            log.warn("Failed to delete file from storage: {}", entity.getStoragePath(), e);
-        }
-
-        // Publish delete event LAST
-        objectEventService.publishObjectDeletedEvent(entity, userId);
-    }
-
-
     public ResponseEntity<Resource> downloadObject(String bucketName, String objectName) {
         log.info("Downloading object '{}' from bucket '{}'", objectName, bucketName);
         validateBucket(bucketName);
@@ -254,27 +234,9 @@ public class ObjectService {
         }
     }
 
-    private CreateObjectRequestDTO normalizeCreateRequest(
-            CreateObjectRequestDTO createObjectRequestDTO
-    ) {
-        if (createObjectRequestDTO == null) {
-            createObjectRequestDTO = new CreateObjectRequestDTO();
-        }
-
-        if (createObjectRequestDTO.getVersionEnabled() == null) {
-            createObjectRequestDTO.setVersionEnabled(true);
-        }
-        if (!StringUtils.hasText(createObjectRequestDTO.getAccessLevel().toString())) {
-            createObjectRequestDTO.setAccessLevel(AccessLevel.PRIVATE);
-        }
-
-        return createObjectRequestDTO;
-    }
-
     public void updateObjectsByBucket(String bucketName, String userId, boolean versioningEnabled ) {
 
         UpdateObjectRequestDTO request = new UpdateObjectRequestDTO();
-
         repository.findAllByBucketName(bucketName)
                 .stream()
                 .forEach(entity ->
@@ -286,4 +248,60 @@ public class ObjectService {
                         )
                 );
     }
+
+//    public void deleteObjectsByBucket(String bucketName, String userId) {
+//        List<ObjectEntity> objects = repository.findAllByBucketName(bucketName);
+//        if (objects.isEmpty()) {
+//            return;
+//        }
+//        for (ObjectEntity entity : objects) {
+//            deleteObject(entity.getBucketName(), entity.getFileName(), userId);
+//        }
+//    }
+//
+//
+//    public void deleteObject(String bucketName, String objectName, String userId) {
+//        validateBucket(bucketName);
+//
+//        ObjectEntity entity = repository
+//                .findByBucketNameAndFileName(bucketName, objectName)
+//                .orElseThrow(() -> new ResourceNotFoundException("Object not found"));
+//
+//        repository.delete(entity);
+//        // Delete file
+//        try {
+//            Files.deleteIfExists(Paths.get(entity.getStoragePath()));
+//        } catch (IOException e) {
+//            log.warn("Failed to delete file from storage: {}", entity.getStoragePath(), e);
+//        }
+//
+//        // Publish delete event LAST
+//        objectEventService.publishObjectDeletedEvent(entity, userId);
+//    }
+
+    // API delete
+    public void deleteObject(String bucketName, String objectName, String userId) {
+        validateBucket(bucketName);
+        ObjectEntity entity = repository
+                .findByBucketNameAndFileName(bucketName, objectName)
+                .orElseThrow(() -> new ResourceNotFoundException("Object not found"));
+        deleteObjectInternal(entity, userId);
+    }
+
+    // bucket delete event
+    public void deleteObjectsByBucket(String bucketName, String userId) {
+        repository.findAllByBucketName(bucketName)
+                .forEach(entity -> deleteObjectInternal(entity, userId));
+    }
+
+    private void deleteObjectInternal(ObjectEntity entity, String userId) {
+        repository.delete(entity);
+        try {
+            Files.deleteIfExists(Paths.get(entity.getStoragePath()));
+        } catch (IOException e) {
+            log.warn("Failed to delete file from storage: {}", entity.getStoragePath(), e);
+        }
+        objectEventService.publishObjectDeletedEvent(entity, userId);
+    }
+
 }

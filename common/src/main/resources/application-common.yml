@@ -18,3 +18,4 @@ s3:
     topics:
       object: s3.object.events
       metadata: s3.metadata.events
+      bucket: s3.bucket.events

@@ -1,5 +1,6 @@
 package com.s3.bucket.service;
 
+import com.s3.bucket.event.BucketEventService;
 import com.s3.bucket.mapper.BucketMapper;
 import com.s3.bucket.model.BucketEntity;
 import com.s3.bucket.repository.BucketRepository;
@@ -25,10 +26,12 @@ public class BucketService {
 
     private final BucketRepository bucketRepository;
     private final BucketMapper bucketMapper;
+    private final BucketEventService bucketEventService;
 
-    public BucketService(BucketRepository bucketRepository, BucketMapper bucketMapper) {
+    public BucketService(BucketRepository bucketRepository, BucketMapper bucketMapper, BucketEventService bucketEventService) {
         this.bucketRepository = bucketRepository;
         this.bucketMapper = bucketMapper;
+        this.bucketEventService = bucketEventService;
     }
 
     // ---------------- GET SINGLE ----------------
@@ -92,17 +95,33 @@ public class BucketService {
                                   boolean versioningEnabled) {
 
         logger.info("Updating bucket '{}' for owner '{}'", bucketName, ownerId);
-
         BucketEntity entity = bucketRepository
                 .findByBucketNameAndOwnerId(bucketName, ownerId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Bucket not found"));
+        boolean oldVersioningEnabled = entity.isVersioningEnabled();
+        // No-op update protection (optional but clean)
+        if (oldVersioningEnabled == versioningEnabled) {
+            logger.info(
+                    "Bucket '{}' versioning already set to '{}', skipping update",
+                    bucketName, versioningEnabled
+            );
+            return bucketMapper.toDTO(entity);
+        }
 
         entity.setVersioningEnabled(versioningEnabled);
 
         BucketEntity updated = bucketRepository.save(entity);
 
+        // Emit event ONLY if versioning actually changed
+        bucketEventService.publishBucketUpdatedEvent(
+                updated.getBucketName(),
+                ownerId,
+                updated.isVersioningEnabled()
+        );
+
         logger.info("Bucket '{}' updated successfully", bucketName);
+
         return bucketMapper.toDTO(updated);
     }
 

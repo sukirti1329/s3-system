@@ -9,6 +9,13 @@ spring:
     driverClassName: org.postgresql.Driver
     username: s3user
     password: s3password
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
   jpa:
     hibernate:
       ddl-auto: update
@@ -39,4 +46,9 @@ auth:
     expiration-ms: 86400000
 s3:
   events:
-    enabled: false
+    enabled: true
+    service-name: ${spring.application.name}
+    topics:
+      object: s3.object.events
+      metadata: s3.metadata.events
+      bucket: s3.bucket.events

@@ -18,8 +18,10 @@ public interface ObjectEventMapper {
     @Mapping(target = "versioningEnabled", source = "versionEnabled")
     @Mapping(target = "accessLevel", expression =
             "java(AccessLevel.valueOf(payload.getAccessLevel()))")
+    @Mapping(target = "fileName", source = "filename")
     CreateObjectMetadataDTO toCreateDto(ObjectCreatedPayload payload);
 
     @Mapping(target = "versioningEnabled", source = "versionEnabled")
+    @Mapping(target = "fileName", source = "filename")
     UpdateObjectMetadataDTO toUpdateDto(ObjectUpdatedPayload payload);
 }

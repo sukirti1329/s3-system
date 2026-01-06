@@ -15,7 +15,7 @@ public class ObjectUpdatedPayload implements S3EventPayload {
 
     private String objectId;
     private String bucketName;
-    private String objectKey;
+    private String filename;
 
     // Optional updates
     private String description;

@@ -43,13 +43,13 @@ public class ObjectMetadataService {
     ) {
         log.info("Creating metadata for objectId={}", dto.getObjectId());
 
-        // ✅ MapStruct creates entity using no-arg constructor + setters
+        //  MapStruct creates entity using no-arg constructor + setters
         ObjectMetadataEntity entity = mapper.toEntity(dto);
         entity.setOwnerId(ownerId);
         entity.setAccessLevel(dto.getAccessLevel());
         entity.setActiveVersion(1);
 
-        // ✅ Apply tags BEFORE saving
+        //  Apply tags BEFORE saving
         applyTags(entity, dto.getTags());
 
         log.info("Entity before save - tags count: {}", entity.getTags().size());

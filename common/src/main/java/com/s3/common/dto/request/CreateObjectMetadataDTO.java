@@ -31,4 +31,7 @@ public class CreateObjectMetadataDTO {
     @Schema(description = "Enable or disable versioning")
     private boolean versioningEnabled = true;
 
+    @Schema(description = "Filename of the object")
+    private String fileName;
+
 }

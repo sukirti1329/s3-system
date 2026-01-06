@@ -14,5 +14,5 @@ public class ObjectDeletedPayload implements S3EventPayload {
 
     private String objectId;
     private String bucketName;
-    private String objectKey;
+    private String filename;
 }

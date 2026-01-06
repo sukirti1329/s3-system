@@ -39,7 +39,7 @@ public class ObjectEventService {
                 ObjectCreatedPayload.builder()
                         .objectId(entity.getId())
                         .bucketName(entity.getBucketName())
-                        .objectKey(entity.getFileName())
+                        .filename(entity.getFileName())
                         .description(request.getDescription())
                         .tags(request.getTags())
                         .accessLevel(request.getAccessLevel().toString())
@@ -76,7 +76,7 @@ public class ObjectEventService {
                 ObjectUpdatedPayload.builder()
                         .objectId(entity.getId())
                         .bucketName(entity.getBucketName())
-                        .objectKey(entity.getFileName())
+                        .filename(entity.getFileName())
                         .description(request.getDescription())
                         .tags(request.getTags())
                         .accessLevel(request.getAccessLevel())
@@ -112,7 +112,7 @@ public class ObjectEventService {
                 ObjectDeletedPayload.builder()
                         .objectId(entity.getId())
                         .bucketName(entity.getBucketName())
-                        .objectKey(entity.getFileName())
+                        .filename(entity.getFileName())
                         .build();
 
         S3Event<ObjectDeletedPayload> event =

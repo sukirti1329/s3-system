@@ -59,6 +59,9 @@ public class ObjectMetadataEntity {
     @Column(name = "active_version")
     private Integer activeVersion;
 
+    @Column(name = "file_name", nullable = false)
+    private String fileName;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant createdAt;

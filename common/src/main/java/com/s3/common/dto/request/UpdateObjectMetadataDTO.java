@@ -21,5 +21,8 @@ public class UpdateObjectMetadataDTO {
     @Schema(description = "Tags associated with object")
     private List<String> tags;
 
+    @Schema(description = "Filename of the object")
+    private String fileName;
+
     private boolean versioningEnabled;
 }

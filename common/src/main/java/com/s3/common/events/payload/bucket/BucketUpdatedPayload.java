@@ -1,4 +1,5 @@
 package com.s3.common.events.payload.bucket;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.s3.common.events.payload.S3EventPayload;
 import lombok.*;
 import lombok.extern.jackson.Jacksonized;

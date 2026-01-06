@@ -4,6 +4,8 @@ package com.s3.common.events.payload;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.s3.common.events.payload.bucket.BucketDeletedPayload;
+import com.s3.common.events.payload.bucket.BucketUpdatedPayload;
 import com.s3.common.events.payload.object.ObjectCreatedPayload;
 import com.s3.common.events.payload.object.ObjectDeletedPayload;
 import com.s3.common.events.payload.object.ObjectUpdatedPayload;
@@ -16,6 +18,8 @@ import com.s3.common.events.payload.object.ObjectUpdatedPayload;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ObjectCreatedPayload.class, name = "OBJECT_CREATED"),
         @JsonSubTypes.Type(value = ObjectUpdatedPayload.class, name = "OBJECT_UPDATED"),
-        @JsonSubTypes.Type(value = ObjectDeletedPayload.class, name = "OBJECT_DELETED")
+        @JsonSubTypes.Type(value = ObjectDeletedPayload.class, name = "OBJECT_DELETED"),
+        @JsonSubTypes.Type(value = BucketUpdatedPayload.class, name = "BUCKET_UPDATED"),
+        @JsonSubTypes.Type(value = BucketDeletedPayload.class, name = "BUCKET_DELETED"),
 })public interface S3EventPayload {
 }

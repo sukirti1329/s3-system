@@ -36,7 +36,7 @@ public class BucketEventService {
                 .bucketName(bucketName)
                 .versioningEnabled(versioningEnabled)
                 .build();
-
+        
         S3Event<BucketUpdatedPayload> event = S3Event.<BucketUpdatedPayload>builder()
                 .eventId(UUID.randomUUID().toString())
                 .eventType(S3EventType.BUCKET_UPDATED)

@@ -270,4 +270,20 @@ public class ObjectService {
 
         return createObjectRequestDTO;
     }
+
+    public void updateObjectsByBucket(String bucketName, String userId, boolean versioningEnabled ) {
+
+        UpdateObjectRequestDTO request = new UpdateObjectRequestDTO();
+
+        repository.findAllByBucketName(bucketName)
+                .stream()
+                .forEach(entity ->
+                        objectEventService.publishObjectUpdatedEvent(
+                                entity,
+                                userId,
+                                request,
+                                versioningEnabled
+                        )
+                );
+    }
 }

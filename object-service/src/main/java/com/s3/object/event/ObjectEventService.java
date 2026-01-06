@@ -69,7 +69,7 @@ public class ObjectEventService {
     public void publishObjectUpdatedEvent(
             ObjectEntity entity,
             String ownerId,
-            UpdateObjectRequestDTO request
+            UpdateObjectRequestDTO request, boolean versionEnabled
     ) {
 
         ObjectUpdatedPayload payload =
@@ -80,7 +80,7 @@ public class ObjectEventService {
                         .description(request.getDescription())
                         .tags(request.getTags())
                         .accessLevel(request.getAccessLevel())
-                        .versionEnabled(request.getVersionEnabled())
+                        .versionEnabled(versionEnabled)
                         .build();
 
         S3Event<ObjectUpdatedPayload> event =

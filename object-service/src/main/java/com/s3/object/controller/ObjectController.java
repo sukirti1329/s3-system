@@ -57,7 +57,6 @@ public class ObjectController {
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "tags", required = false) List<String> tags,
             @RequestParam(value = "accessLevel", defaultValue = "PRIVATE") AccessLevel accessLevel,
-            @RequestParam(value = "versionEnabled", defaultValue = "true") Boolean versionEnabled,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) throws IOException {
 
@@ -66,7 +65,6 @@ public class ObjectController {
                 .description(description)
                 .tags(tags != null ? tags : new ArrayList<>())
                 .accessLevel(accessLevel)
-                .versionEnabled(versionEnabled)
                 .build();
 
         log.info(
@@ -88,11 +86,11 @@ public class ObjectController {
                 .body(ApiResponse.success(objectRes));
     }
 
-    @PatchMapping("/{bucketName}/{objectName}")
+    @PatchMapping("/{bucketName}/{fileName}")
     @Operation(summary = "Update object metadata")
     public ResponseEntity<ApiResponse<Void>> updateObject(
             @PathVariable String bucketName,
-            @PathVariable String objectName,
+            @PathVariable String fileName,
             @RequestBody UpdateObjectRequestDTO request,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) {
@@ -100,13 +98,13 @@ public class ObjectController {
         log.info(
                 "User [{}] updating object [{}] in bucket [{}]",
                 user.getUserId(),
-                objectName,
+                fileName,
                 bucketName
         );
 
         objectService.updateObject(
                 bucketName,
-                objectName,
+                fileName,
                 user.getUserId(),
                 request
         );

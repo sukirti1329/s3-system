@@ -1,5 +1,6 @@
 package com.s3.object.service;
 
+import com.s3.common.dto.BucketDTO;
 import com.s3.common.dto.request.CreateObjectRequestDTO;
 import com.s3.common.dto.request.UpdateObjectRequestDTO;
 import com.s3.common.dto.response.ObjectResponseDTO;
@@ -7,15 +8,18 @@ import com.s3.common.enums.AccessLevel;
 import com.s3.common.exception.InvalidRequestException;
 import com.s3.common.exception.ResourceNotFoundException;
 import com.s3.common.logging.LoggingUtil;
+import com.s3.common.response.ApiResponse;
 import com.s3.object.event.ObjectEventService;
 import com.s3.object.mapper.ObjectMapper;
 import com.s3.object.model.ObjectEntity;
 import com.s3.object.repository.ObjectRepository;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -23,13 +27,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.security.MessageDigest;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional
@@ -67,54 +70,83 @@ public class ObjectService {
             CreateObjectRequestDTO request
     ) throws IOException {
 
-        validateBucket(bucketName);
-        String fileName = file.getOriginalFilename();
-        if (!StringUtils.hasText(fileName)) {
-            throw new InvalidRequestException("File name is required");
-        }
+        BucketDTO bucketDTO = validateAndGetBucket(bucketName);
+        boolean versioningEnabled = bucketDTO.isVersioningEnabled();
 
+        // Always override request (never trust client)
+        request.setVersionEnabled(versioningEnabled);
+
+        validateFileDetails(file);
+
+        String fileName = file.getOriginalFilename();
+        // 3. DB-level object existence check
         if (repository.existsByBucketNameAndFileName(bucketName, fileName)) {
             throw new InvalidRequestException("Object already exists");
-        }//TODO: Add check if file exist in directory
+        }
 
+        // 4. Prepare filesystem paths
         Path bucketPath = Paths.get(storageLocation, bucketName);
         Files.createDirectories(bucketPath);
 
-        Path filePath = bucketPath.resolve(file.getOriginalFilename());
-        //TODO: This should in last step
-        Files.copy(file.getInputStream(), filePath);
+        Path filePath = bucketPath.resolve(fileName);
+        if (Files.exists(filePath)) {
+            throw new InvalidRequestException("File already exists in storage");
+        }
 
-        String contentType = setContentType(file.getContentType());
+        // 5. Persist object metadata
         ObjectEntity entity = ObjectEntity.builder()
                 .id(UUID.randomUUID().toString())
                 .bucketName(bucketName)
-                .fileName(file.getOriginalFilename())
+                .fileName(fileName)
                 .size(file.getSize())
                 .checksum(calculateChecksum(file.getBytes()))
                 .storagePath(filePath.toString())
-                .contentType(contentType)
+                .contentType(setContentType(file.getContentType()))
                 .build();
 
         repository.save(entity);
 
+        // 6. Publish event (bucket-driven versioning)
         objectEventService.publishObjectCreatedEvent(entity, userId, request);
+
+        // 7. Write file LAST (side effect)
+        Files.copy(file.getInputStream(), filePath);
+
         return mapper.toDTO(entity);
+    }
+
+    private static void validateFileDetails(MultipartFile file) {
+        String fileName = StringUtils.cleanPath(
+                Objects.requireNonNull(file.getOriginalFilename())
+        );
+
+        if (!StringUtils.hasText(fileName)) {
+            throw new InvalidRequestException("File name is required");
+        }
+
+        if (file.isEmpty()) {
+            throw new InvalidRequestException("File is empty");
+        }
+
+        if (fileName.contains("..")) {
+            throw new InvalidRequestException("Invalid file name");
+        }
     }
 
     public void updateObject(
             String bucketName,
-            String objectName,
+            String fileName,
             String userId,
             UpdateObjectRequestDTO request
     ) {
 
-        validateBucket(bucketName);
-
+        BucketDTO bucketDTO = validateAndGetBucket(bucketName);
         ObjectEntity entity = repository
-                .findByBucketNameAndFileName(bucketName, objectName)
-                .orElseThrow(() -> new ResourceNotFoundException("Object not found"));
+                .findByBucketNameAndFileName(bucketName, fileName)
+                .orElseThrow(() -> new ResourceNotFoundException("Object/File not found"));
 
-        objectEventService.publishObjectUpdatedEvent(entity, userId, request);
+        //request.setVersionEnabled(bucketDTO.isVersioningEnabled());
+        objectEventService.publishObjectUpdatedEvent(entity, userId, request, bucketDTO.isVersioningEnabled());
     }
     public List<ObjectResponseDTO> listObjects(String bucketName, String userId) {
         validateBucket(bucketName);
@@ -192,6 +224,25 @@ public class ObjectService {
                 .retrieve()
                 .toBodilessEntity()
                 .block();
+    }
+
+    private BucketDTO validateAndGetBucket(String bucketName) {
+
+        ApiResponse<BucketDTO> response = webClient.get()
+                .uri(bucketServiceUrl + "/buckets/{name}", bucketName)
+                .retrieve()
+                .onStatus(
+                        HttpStatusCode::is4xxClientError,
+                        r -> Mono.error(new ResourceNotFoundException("Bucket not found: " + bucketName))
+                )
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<BucketDTO>>() {})
+                .block();
+
+        if (response == null || response.getData() == null) {
+            throw new ResourceNotFoundException("Bucket not found: " + bucketName);
+        }
+
+        return response.getData();
     }
 
     private String calculateChecksum(byte[] data) {

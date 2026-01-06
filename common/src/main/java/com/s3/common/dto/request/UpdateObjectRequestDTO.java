@@ -16,5 +16,4 @@ public class UpdateObjectRequestDTO {
     private String description;
     private List<String> tags;
     private String accessLevel;
-    private Boolean versionEnabled;
 }

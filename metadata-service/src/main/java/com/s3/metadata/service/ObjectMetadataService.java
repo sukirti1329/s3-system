@@ -82,7 +82,7 @@ public class ObjectMetadataService {
 
         mapper.updateEntity(dto, entity);
 
-        // ✅ Update tags if provided
+        // Update tags if provided
         if (dto.getTags() != null) {
             applyTags(entity, dto.getTags());
         }

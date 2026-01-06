@@ -128,6 +128,7 @@ public class BucketService {
     // ---------------- DELETE ----------------
     @CacheEvict(value = "bucketsByOwner", key = "#ownerId")
     public void deleteBucketOfUser(String bucketName, String ownerId) {
+
         logger.info("Deleting bucket '{}' for owner '{}'", bucketName, ownerId);
 
         BucketEntity entity = bucketRepository
@@ -135,7 +136,15 @@ public class BucketService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Bucket not found"));
 
+        // Delete bucket first
         bucketRepository.delete(entity);
+
+        // Emit event AFTER successful delete
+        bucketEventService.publishBucketDeletedEvent(
+                bucketName,
+                ownerId
+        );
+
         logger.info("Bucket '{}' deleted successfully", bucketName);
     }
 }

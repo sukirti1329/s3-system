@@ -23,6 +23,9 @@ public class ObjectEntity {
     @Id
     private String id;
 
+    @Column(name = "owner_id", nullable = false)
+    private String ownerId;
+
     @Column(name = "bucket_name", nullable = false)
     private String bucketName;
 
@@ -40,6 +43,9 @@ public class ObjectEntity {
 
     @Column(name = "storage_path", nullable = false)
     private String storagePath;
+
+    @Column(name = "versioning_enabled", nullable = false)
+    private boolean versioningEnabled;
 
     @CreationTimestamp
     @Column(name = "uploaded_at", nullable = false, updatable = false)

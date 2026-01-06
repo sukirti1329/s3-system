@@ -4,12 +4,11 @@ import com.s3.common.dto.BucketDTO;
 import com.s3.common.dto.request.CreateObjectRequestDTO;
 import com.s3.common.dto.request.UpdateObjectRequestDTO;
 import com.s3.common.dto.response.ObjectResponseDTO;
-import com.s3.common.enums.AccessLevel;
 import com.s3.common.exception.InvalidRequestException;
 import com.s3.common.exception.ResourceNotFoundException;
 import com.s3.common.logging.LoggingUtil;
 import com.s3.common.response.ApiResponse;
-import com.s3.object.event.ObjectEventService;
+import com.s3.object.event.service.ObjectEventService;
 import com.s3.object.mapper.ObjectMapper;
 import com.s3.object.model.ObjectEntity;
 import com.s3.object.repository.ObjectRepository;
@@ -102,6 +101,8 @@ public class ObjectService {
                 .checksum(calculateChecksum(file.getBytes()))
                 .storagePath(filePath.toString())
                 .contentType(setContentType(file.getContentType()))
+                .ownerId(userId)
+                .versioningEnabled(bucketDTO.isVersioningEnabled())
                 .build();
 
         repository.save(entity);
@@ -145,7 +146,6 @@ public class ObjectService {
                 .findByBucketNameAndFileName(bucketName, fileName)
                 .orElseThrow(() -> new ResourceNotFoundException("Object/File not found"));
 
-        //request.setVersionEnabled(bucketDTO.isVersioningEnabled());
         objectEventService.publishObjectUpdatedEvent(entity, userId, request, bucketDTO.isVersioningEnabled());
     }
     public List<ObjectResponseDTO> listObjects(String bucketName, String userId) {

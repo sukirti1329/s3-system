@@ -87,7 +87,7 @@ public class ObjectMetadataService {
             applyTags(entity, dto.getTags());
         }
 
-        if (Boolean.TRUE.equals(dto.getVersioningEnabled())) {
+        if (Boolean.TRUE.equals(dto.isVersioningEnabled())) {
             versionService.createNewVersion(
                     objectId,
                     entity.getOwnerId()

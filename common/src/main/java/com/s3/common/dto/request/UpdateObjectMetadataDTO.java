@@ -21,5 +21,5 @@ public class UpdateObjectMetadataDTO {
     @Schema(description = "Tags associated with object")
     private List<String> tags;
 
-    private Boolean versioningEnabled;
+    private boolean versioningEnabled;
 }

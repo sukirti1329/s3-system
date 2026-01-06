@@ -21,5 +21,5 @@ public class ObjectUpdatedPayload implements S3EventPayload {
     private String description;
     private List<String> tags;
     private String accessLevel;
-    private Boolean versionEnabled;
+    private boolean versionEnabled;
 }

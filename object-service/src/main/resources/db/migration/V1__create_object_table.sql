@@ -1,70 +1,21 @@
-CREATE TABLE object_metadata (
-    id UUID PRIMARY KEY,
-    object_id VARCHAR(50) UNIQUE NOT NULL,
+CREATE TABLE IF NOT EXISTS public.objects (
+    id VARCHAR(255) NOT NULL,
     bucket_name VARCHAR(255) NOT NULL,
-    owner_id VARCHAR(50) NOT NULL,
-    access_level VARCHAR(20) NOT NULL DEFAULT 'PRIVATE',
-    description TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE object_tags (
-    id UUID PRIMARY KEY,
-    metadata_id UUID NOT NULL,
-    tag VARCHAR(100) NOT NULL,
-    CONSTRAINT fk_object_tags_metadata
-        FOREIGN KEY (metadata_id)
-        REFERENCES object_metadata(id)
-        ON DELETE CASCADE
-);
-
--- Prevent duplicate tags for same object
-ALTER TABLE object_tags
-ADD CONSTRAINT uq_metadata_tag UNIQUE (metadata_id, tag);
-
-CREATE TABLE object_versions (
-    id UUID PRIMARY KEY,
-    metadata_id UUID NOT NULL,
-    version_number INT NOT NULL,
     checksum VARCHAR(255),
+    file_name VARCHAR(255) NOT NULL,
     size BIGINT NOT NULL,
-    storage_path TEXT NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_versions_metadata
-        FOREIGN KEY (metadata_id)
-        REFERENCES object_metadata(id)
-        ON DELETE CASCADE
+    storage_path VARCHAR(255) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    content_type VARCHAR(255) NOT NULL,
+    owner_id VARCHAR(255) NOT NULL,
+    versioning_enabled BOOLEAN NOT NULL,
+
+    CONSTRAINT objects_pkey PRIMARY KEY (id),
+    CONSTRAINT uk5w0es6pt1pcq8vnd466ip97n8 UNIQUE (bucket_name, file_name)
 );
 
--- Only one active version per object
-CREATE UNIQUE INDEX uq_active_version
-    ON object_versions(metadata_id)
-    WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_objects_owner_id
+    ON public.objects(owner_id);
 
--- Prevent duplicate version numbers
-ALTER TABLE object_versions
-ADD CONSTRAINT uq_metadata_version UNIQUE (metadata_id, version_number);
-
--- ============================================================
--- INDEXES (SEARCH & PERFORMANCE)
--- ============================================================
-
-CREATE INDEX idx_metadata_object_id
-    ON object_metadata(object_id);
-
-CREATE INDEX idx_metadata_owner
-    ON object_metadata(owner_id);
-
-CREATE INDEX idx_metadata_bucket
-    ON object_metadata(bucket_name);
-
-CREATE INDEX idx_metadata_access
-    ON object_metadata(access_level);
-
-CREATE INDEX idx_tags_tag
-    ON object_tags(tag);
-
-CREATE INDEX idx_versions_metadata
-    ON object_versions(metadata_id);
+CREATE INDEX IF NOT EXISTS idx_objects_versioning_enabled
+    ON public.objects(versioning_enabled);

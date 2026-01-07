@@ -21,15 +21,5 @@ public class BucketServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(BucketServiceApplication.class, args);
     }
-
-    @Bean
-    CommandLineRunner listBeans(ApplicationContext ctx) {
-        return args -> {
-            System.out.println("=== Loaded Beans Containing 'jwt' ===");
-            Arrays.stream(ctx.getBeanDefinitionNames())
-                    .filter(name -> name.toLowerCase().contains("jwt"))
-                    .forEach(System.out::println);
-        };
-    }
 }
 

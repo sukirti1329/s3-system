@@ -10,8 +10,6 @@ import com.s3.common.security.JwtUserPrincipal;
 import com.s3.object.service.ObjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.springframework.core.io.Resource;
@@ -86,29 +84,17 @@ public class ObjectController {
                 .body(ApiResponse.success(objectRes));
     }
 
-    @PatchMapping("/{bucketName}/{fileName}")
+    @PatchMapping("/{bucketName}/{objectName}")
     @Operation(summary = "Update object metadata")
     public ResponseEntity<ApiResponse<Void>> updateObject(
             @PathVariable String bucketName,
-            @PathVariable String fileName,
+            @PathVariable String objectName,
             @RequestBody UpdateObjectRequestDTO request,
             @AuthenticationPrincipal JwtUserPrincipal user
-    ) {
-
-        log.info(
-                "User [{}] updating object [{}] in bucket [{}]",
-                user.getUserId(),
-                fileName,
-                bucketName
-        );
-
-        objectService.updateObject(
-                bucketName,
-                fileName,
-                user.getUserId(),
-                request
-        );
-
+    )
+    {
+        log.info("User [{}] updating object [{}] in bucket [{}]", user.getUserId(), objectName, bucketName);
+        objectService.updateObject(bucketName, objectName, user.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success());
     }
 

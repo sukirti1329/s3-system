@@ -76,23 +76,20 @@ public class ObjectMetadataController {
     }
 
     // ---------------- SEARCH ----------------
+    @PostMapping("/search")  // Changed from GET to POST
     @Operation(
             summary = "Search objects",
             description = """
-                Search objects using metadata filters.
-                All parameters are optional.
-                Tag search supports multiple values (OR semantics).
-                """
+            Search objects using metadata filters.
+            All parameters are optional.
+            Tag search supports multiple values (OR semantics).
+            """
     )
-    @GetMapping("/search")
-    public List<ObjectMetadataResponseDTO> search(
-            @ModelAttribute SearchObjectRequestDTO request,
+    public ResponseEntity<List<ObjectMetadataResponseDTO>> search(
+            @RequestBody SearchObjectRequestDTO request,
             @AuthenticationPrincipal JwtUserPrincipal user
     ) {
-        return service.search(
-                user.getUserId(),
-                request
-        );
+        return ResponseEntity.ok(service.search(user.getUserId(), request));
     }
 
 }

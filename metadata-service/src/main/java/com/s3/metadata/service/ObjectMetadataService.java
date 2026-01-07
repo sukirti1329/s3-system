@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -164,14 +165,15 @@ public class ObjectMetadataService {
 
     /* ===================== Search ===================== */
     @Transactional(readOnly = true)
-    public List<ObjectMetadataResponseDTO> search(String ownerId,SearchObjectRequestDTO searchRequest) {
-
-        String bucketName = searchRequest.getBucketName(); // equality → null is OK
+    public List<ObjectMetadataResponseDTO> search(String ownerId, SearchObjectRequestDTO searchRequest) {
+        String bucketName = normalize(searchRequest.getBucketName());
         String fileName = normalize(searchRequest.getFileName());
         String description = normalize(searchRequest.getDescription());
         List<String> tags = normalizeTags(searchRequest.getTags());
         boolean hasTags = !tags.isEmpty();
-        log.info("Searching objects ownerId={}, bucketName={}, fileName={}, description={}, tags={}", ownerId, bucketName, fileName, description, tags);
+
+        log.info("Searching objects ownerId={}, bucketName={}, fileName={}, description={}, tags={}",
+                ownerId, bucketName, fileName, description, tags);
 
         return mapper.toResponseList(
                 repository.search(ownerId, bucketName, fileName, description, tags, hasTags));
@@ -182,7 +184,14 @@ public class ObjectMetadataService {
     }
 
     private List<String> normalizeTags(List<String> tags) {
-        return (tags == null) ? List.of() : tags;
+        if (tags == null || tags.isEmpty()) {
+            return List.of();
+        }
+        // Ensure tags are flattened and trimmed
+        return tags.stream()
+                .filter(tag -> tag != null && !tag.trim().isEmpty())
+                .map(String::trim)
+                .collect(Collectors.toList());
     }
 
 }

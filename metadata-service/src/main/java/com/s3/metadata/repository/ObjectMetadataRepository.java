@@ -24,9 +24,9 @@ public interface ObjectMetadataRepository
         FROM ObjectMetadataEntity m
         LEFT JOIN m.tags t
         WHERE m.ownerId = :ownerId
-        AND (:bucketName IS NULL OR m.bucketName = :bucketName)
-        AND LOWER(m.fileName) LIKE CONCAT('%', :fileName, '%')
-        AND LOWER(m.description) LIKE CONCAT('%', :description, '%')
+        AND (:fileName = '' OR m.bucketName = :bucketName)
+        AND (:fileName = '' OR LOWER(m.fileName) LIKE CONCAT('%', :fileName, '%'))
+        AND (:description = '' OR LOWER(m.description) LIKE CONCAT('%', :description, '%'))
         AND (:hasTags = false OR t.tag IN :tags)
         """)
     List<ObjectMetadataEntity> search(

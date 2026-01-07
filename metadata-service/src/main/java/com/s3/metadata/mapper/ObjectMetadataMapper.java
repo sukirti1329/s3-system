@@ -13,17 +13,17 @@ import java.util.List;
 
 @Mapper(
         componentModel = "spring",
-        builder = @org.mapstruct.Builder(disableBuilder = true)  // ✅ Use setters
+        builder = @org.mapstruct.Builder(disableBuilder = true)  //  Use setters
 )
 public interface ObjectMetadataMapper {
 
     /* ===================== CREATE ===================== */
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "tags", ignore = true)  // ✅ Handle tags manually in service
+    @Mapping(target = "tags", ignore = true)              //  Handle tags manually
     @Mapping(target = "activeVersion", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)  // ✅ Let @CreationTimestamp handle it
-    @Mapping(target = "updatedAt", ignore = true)  // ✅ Let @UpdateTimestamp handle it
+    @Mapping(target = "createdAt", ignore = true)         //  @CreationTimestamp
+    @Mapping(target = "updatedAt", ignore = true) //@UpdateTimestamp
     ObjectMetadataEntity toEntity(CreateObjectMetadataDTO dto);
 
     /* ===================== UPDATE ===================== */
@@ -34,19 +34,18 @@ public interface ObjectMetadataMapper {
     @Mapping(target = "bucketName", ignore = true)
     @Mapping(target = "ownerId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)  //  Let @UpdateTimestamp handle it
-    @Mapping(target = "tags", ignore = true)  //  Handle tags manually in service
-    void updateEntity(UpdateObjectMetadataDTO dto,
-                      @MappingTarget ObjectMetadataEntity entity);
+    @Mapping(target = "updatedAt", ignore = true)         // @UpdateTimestamp
+    @Mapping(target = "tags", ignore = true) //  Handle tags manually
+    void updateEntity(UpdateObjectMetadataDTO dto, @MappingTarget ObjectMetadataEntity entity);
 
     /* ===================== RESPONSE ===================== */
 
     @Mapping(target = "tags", expression = "java(mapTags(entity))")
-    @Mapping(target = "createdAt", source = "createdAt")
-    @Mapping(target = "updatedAt", source = "updatedAt")
     ObjectMetadataResponseDTO toResponse(ObjectMetadataEntity entity);
 
-    /* ===================== TAG MAPPERS ===================== */
+    List<ObjectMetadataResponseDTO> toResponseList(List<ObjectMetadataEntity> entities);
+
+    /* ===================== TAG MAPPING ===================== */
 
     default List<String> mapTags(ObjectMetadataEntity entity) {
         if (entity == null || entity.getTags() == null) {

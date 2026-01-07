@@ -1,6 +1,7 @@
 package com.s3.metadata.controller;
 
 import com.s3.common.dto.request.CreateObjectMetadataDTO;
+import com.s3.common.dto.request.SearchObjectRequestDTO;
 import com.s3.common.dto.request.UpdateObjectMetadataDTO;
 import com.s3.common.dto.response.ObjectMetadataResponseDTO;
 import com.s3.common.logging.LoggingUtil;
@@ -75,16 +76,23 @@ public class ObjectMetadataController {
     }
 
     // ---------------- SEARCH ----------------
-//    @GetMapping("/search")
-//    @Operation(
-//            summary = "Search metadata",
-//            description = "Search objects by metadata tags"
-//    )
-//    public ResponseEntity<ApiResponse<List<CreateObjectMetadataDTO>>> search(
-//            @RequestParam String tag,
-//            @AuthenticationPrincipal JwtUserPrincipal user
-//    ) {
-//        log.info("User [{}] searching metadata by tag={}", user.getUserId(), tag);
-//        return ResponseEntity.ok(ApiResponse.success(service.searchByTag(tag)));
-//    }
+    @Operation(
+            summary = "Search objects",
+            description = """
+                Search objects using metadata filters.
+                All parameters are optional.
+                Tag search supports multiple values (OR semantics).
+                """
+    )
+    @GetMapping("/search")
+    public List<ObjectMetadataResponseDTO> search(
+            @ModelAttribute SearchObjectRequestDTO request,
+            @AuthenticationPrincipal JwtUserPrincipal user
+    ) {
+        return service.search(
+                user.getUserId(),
+                request
+        );
+    }
+
 }

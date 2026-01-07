@@ -34,6 +34,9 @@ public class ObjectMetadataResponseDTO {
     @Schema(description = "Enable versioning for this bucket", example = "true")
     private boolean versioningEnabled;
 
+    @Schema(description = "file name for this object", example = "sample.png")
+    private String fileName;
+
     @Schema(description = "Current active version number")
     private Integer activeVersion;
 

@@ -1,6 +1,7 @@
 package com.s3.metadata.service;
 
 import com.s3.common.dto.request.CreateObjectMetadataDTO;
+import com.s3.common.dto.request.SearchObjectRequestDTO;
 import com.s3.common.dto.request.UpdateObjectMetadataDTO;
 import com.s3.common.dto.response.ObjectMetadataResponseDTO;
 import com.s3.common.exception.ResourceNotFoundException;
@@ -12,6 +13,7 @@ import com.s3.metadata.repository.ObjectMetadataRepository;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
@@ -159,4 +161,28 @@ public class ObjectMetadataService {
                         )
                 );
     }
+
+    /* ===================== Search ===================== */
+    @Transactional(readOnly = true)
+    public List<ObjectMetadataResponseDTO> search(String ownerId,SearchObjectRequestDTO searchRequest) {
+
+        String bucketName = searchRequest.getBucketName(); // equality → null is OK
+        String fileName = normalize(searchRequest.getFileName());
+        String description = normalize(searchRequest.getDescription());
+        List<String> tags = normalizeTags(searchRequest.getTags());
+        boolean hasTags = !tags.isEmpty();
+        log.info("Searching objects ownerId={}, bucketName={}, fileName={}, description={}, tags={}", ownerId, bucketName, fileName, description, tags);
+
+        return mapper.toResponseList(
+                repository.search(ownerId, bucketName, fileName, description, tags, hasTags));
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.toLowerCase();
+    }
+
+    private List<String> normalizeTags(List<String> tags) {
+        return (tags == null) ? List.of() : tags;
+    }
+
 }
